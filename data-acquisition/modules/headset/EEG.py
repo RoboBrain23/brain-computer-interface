@@ -1,12 +1,12 @@
 import os
+import time
 
-import logging
 import cyPyWinUSB as hid
 import queue
 from cyCrypto.Cipher import AES
 
-
 tasks = queue.Queue()
+
 
 class EEG(object):
 
@@ -14,16 +14,16 @@ class EEG(object):
         self.hid = None
         self.delimiter = ", "
 
-        devicesUsed = 0
+        devices_used = 0
 
         for device in hid.find_all_hid_devices():
             if device.product_name == 'EEG Signals':
-                devicesUsed += 1
+                devices_used += 1
                 self.hid = device
                 self.hid.open()
                 self.serial_number = device.serial_number
                 device.set_raw_data_handler(self.dataHandler)
-        if devicesUsed == 0:
+        if devices_used == 0:
             os._exit(0)
         sn = self.serial_number
 
@@ -66,10 +66,15 @@ class EEG(object):
         except Exception as exception2:
             print(str(exception2))
 
-    def isTasksEmpty(self):
+    def is_tasks_empty(self):
+        """
+
+        :return: True, if a Queue instance has zero elements, otherwise it returns False
+        """
         return tasks.empty()
 
-    def getDeviceInfo(self):
+    def get_headset_info(self):
+
         print("vendor_name : " + self.hid.vendor_name)
         print("vendor_id : " + str(self.hid.vendor_id))
         print("product_name : " + self.hid.product_name)
@@ -78,5 +83,60 @@ class EEG(object):
         print("serial_number : " + self.hid.serial_number)
 
 
+    def create_csv_file(self, prefix="", path=os.path.realpath("")):
+        """
+        Creates a CSV file for recording EEG data with a unique file name based on the current date and time.
+
+        :param prefix: The prefix that will be added at the beginning of the CSV file name.
+        :param path: The path of the records folder.
+        :return: The full path of the CSV file.
+        """
 
 
+        # Create a folder for records.
+        if not os.path.exists(path + "/EEG-Records"):
+            try:
+                os.mkdir(path + "/EEG-Records")
+            except Exception as msg:
+                print("Failed to Create Directory: '" + path + "/EEG-Records/' \r\n Please Check Permissions. ")
+                print(str(msg))
+                return
+
+        # Add timestamp to the name of recorded file.
+        file_name = prefix + "_" if prefix != "" else ""
+        file_name += str(time.strftime("%d.%m.%y_%H.%M.%S"))
+
+        # Create a CSV record file.
+        file_path = path + "/EEG-Records/" + file_name + '.csv'
+
+        return file_path
+
+    def record_csv(self):
+        """
+        Record the EPOC+ raw data in a CSV file
+        """
+        file_path = self.create_csv_file()
+
+        try:
+            record_file = open(file_path, "a+", newline='')
+
+            csv_header = "F3 FC5 AF3 F7 T7 P7 O1 O2 P8 T8 F8 AF4 FC6 F4"
+
+            record_file.write(csv_header + "\n")
+
+            record_file.flush()
+            os.fsync(record_file.fileno())
+
+            # Append the raw data into CSV file.
+            try:
+                while 1:
+                    while self.is_tasks_empty():
+                        pass
+                    record_file.write(self.get_data() + "\n")
+                    print(self.get_data())
+            except KeyboardInterrupt:
+                record_file.close()
+                print("File Path>> " + file_path)
+
+        except Exception as e:
+            print(e)
