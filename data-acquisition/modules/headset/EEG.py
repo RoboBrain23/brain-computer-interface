@@ -1,8 +1,13 @@
 import os
+import sys
 import time
+import queue
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+packages_path = os.path.join(dir_path, "cyKit")
+sys.path.append(packages_path)
 
 import cyPyWinUSB as hid
-import queue
 from cyCrypto.Cipher import AES
 
 tasks = queue.Queue()
@@ -11,6 +16,7 @@ tasks = queue.Queue()
 class EEG(object):
 
     def __init__(self):
+
         self.hid = None
         self.delimiter = ", "
 
@@ -22,7 +28,7 @@ class EEG(object):
                 self.hid = device
                 self.hid.open()
                 self.serial_number = device.serial_number
-                device.set_raw_data_handler(self.dataHandler)
+                device.set_raw_data_handler(self.data_handler)
         if devices_used == 0:
             os._exit(0)
         sn = self.serial_number
@@ -35,14 +41,14 @@ class EEG(object):
         self.key = str(''.join(k))
         self.cipher = AES.new(self.key.encode("utf8"), AES.MODE_ECB)
 
-    def dataHandler(self, data):
+    def data_handler(self, data):
         join_data = ''.join(map(chr, data[1:]))
         data = self.cipher.decrypt(bytes(join_data, 'latin-1')[0:32])
         if str(data[1]) == "32":  # No Gyro Data.
             return
         tasks.put(data)
 
-    def convertEPOC_PLUS(self, value_1, value_2):
+    def convert_epoc_plus(self, value_1, value_2):
         edk_value = "%.8f" % (
                 ((int(value_1) * .128205128205129) + 4201.02564096001) + ((int(value_2) - 128) * 32.82051289))
         return edk_value
@@ -55,10 +61,10 @@ class EEG(object):
         try:
             packet_data = ""
             for i in range(2, 16, 2):
-                packet_data = packet_data + str(self.convertEPOC_PLUS(str(data[i]), str(data[i + 1]))) + self.delimiter
+                packet_data = packet_data + str(self.convert_epoc_plus(str(data[i]), str(data[i + 1]))) + self.delimiter
 
             for i in range(18, len(data), 2):
-                packet_data = packet_data + str(self.convertEPOC_PLUS(str(data[i]), str(data[i + 1]))) + self.delimiter
+                packet_data = packet_data + str(self.convert_epoc_plus(str(data[i]), str(data[i + 1]))) + self.delimiter
 
             packet_data = packet_data[:-len(self.delimiter)]
             return str(packet_data)
@@ -82,7 +88,6 @@ class EEG(object):
         print("version_number : " + str(self.hid.version_number))
         print("serial_number : " + self.hid.serial_number)
 
-
     def create_csv_file(self, prefix="", path=os.path.realpath("")):
         """
         Creates a CSV file for recording EEG data with a unique file name based on the current date and time.
@@ -91,7 +96,6 @@ class EEG(object):
         :param path: The path of the records folder.
         :return: The full path of the CSV file.
         """
-
 
         # Create a folder for records.
         if not os.path.exists(path + "/EEG-Records"):
