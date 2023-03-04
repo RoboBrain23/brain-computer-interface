@@ -1,17 +1,17 @@
 import sys
 
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton
 
-from widgets.DataAcquisitionButton import StartDataAcquisitionButton
 from widgets.LogoLabel import LogoLabel
 
-app = QApplication(sys.argv)
+from widgets.CountdownMessageBox import CountdownMessageBox
 
 
 class MainDataAcquisitionWindow(QWidget):
     def __init__(self):
         super().__init__()
 
+        self.Countdown = None
         self.setWindowTitle("Data Acquisition")
         v_layout = QVBoxLayout()
 
@@ -25,7 +25,9 @@ class MainDataAcquisitionWindow(QWidget):
         description_label.setText("Welcome in data acquisition section")
 
         # Starting Button
-        starting_button = StartDataAcquisitionButton()
+        starting_button = QPushButton()
+        starting_button.setText("Start")
+        starting_button.clicked.connect(self.start_clicked)
 
         # Add widgets to the vertical layout
         v_layout.addWidget(logo_label)
@@ -34,9 +36,14 @@ class MainDataAcquisitionWindow(QWidget):
 
         self.setLayout(v_layout)
 
+    def start_clicked(self):
+        print("Countdown Started")
+        self.Countdown = CountdownMessageBox()
+        self.Countdown.show()
 
-window = MainDataAcquisitionWindow()
 
-window.show()
-
-app.exec()
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = MainDataAcquisitionWindow()
+    window.show()
+    app.exec()
