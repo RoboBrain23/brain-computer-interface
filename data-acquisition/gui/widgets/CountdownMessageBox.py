@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QMessageBox
 
 
 class CountdownMessageBox(QMessageBox):
-    def __init__(self, timeout=5):
+    def __init__(self, timeout: int):
         super().__init__()
         self.setWindowTitle("Be Ready")
         self.time_to_wait = timeout
@@ -15,7 +15,7 @@ class CountdownMessageBox(QMessageBox):
         self.timer.start()
 
     def onChangeContent(self):
-        if self.time_to_wait > 0:
+        if self.time_to_wait > 1:
             self.time_to_wait -= 1
             self.setText("The Session will start after {0} seconds.".format(self.time_to_wait))
             print(self.time_to_wait)
