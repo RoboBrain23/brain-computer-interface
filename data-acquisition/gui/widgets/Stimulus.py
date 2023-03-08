@@ -2,7 +2,7 @@ from pygame import Surface, Rect
 
 
 class Checkerboard:
-    def create(self, noOfHorizontalBoxes: int = 5, noOfVerticalBoxes: int = 5, checkerboardWidth: int = 100, checkerboardHeight: int = 100) -> Surface:
+    def create(self, noOfHorizontalBoxes: int = 5, noOfVerticalBoxes: int = 5, checkerboardWidth: int = 150, checkerboardHeight: int = 150) -> Surface:
         """
 
         :param noOfHorizontalBoxes: Number of boxes in the vertical line or X-axis in the checkerboard.

@@ -1,124 +1,140 @@
 import sys
+import time
 
 import pygame
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QGroupBox, QRadioButton, \
-    QHBoxLayout
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton
 
-from widgets.LogoLabel import LogoLabel
-
-from widgets.CountdownMessageBox import CountdownMessageBox
-
-from widgets.FlickeringBox import FlickeringManager
 from widgets.FlickringModeGroupBox import FlickeringModeGroupBox
+from widgets.LogoLabel import LogoLabel
+from widgets.Stimulus import FlickeringManager as stimulusManager
 
 
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
 
+        # Stimulus Configurations
+        # TODO: Customize these configurations as you like.
+        # Start of configurations
+
+        self.stimulusScreenWidth = 1024
+        self.stimulusScreenHeight = 768
+
+        self.TOP_FREQ = 9  # HZ => 6.666666666666667
+        self.RIGHT_FREQ = 8  # HZ => 7.5
+        self.DOWN_FREQ = 7  # HZ => 8.571428571428571
+        self.LEFT_FREQ = 6  # HZ => 10.0
+
+        self.EPOC_DURATION = 2  # Seconds
+        self.BREAK_DURATION = 2000  # Milliseconds
+
+        # End of configurations
+
+        self.setWindowTitle("SSVEP Stimulus")
+        self.vLayout = QVBoxLayout()
+
+        # GUI Components
         self.Countdown = None
-        self.setWindowTitle("Data Acquisition")
-        v_layout = QVBoxLayout()
+        self.stimulus = None
 
         # Logo Label
-        logo_width = 400
-        logo_height = 400
-        logo_label = LogoLabel(logo_width, logo_height)
-        logo_label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        self._logoWidth = 400
+        self._logoHeight = 400
+        self.logoLabel = LogoLabel(self._logoWidth, self._logoHeight)
+        self.logoLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
 
         # Description Label
-        description_label = QLabel()
-        description_label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        description_label.setText("Welcome in data acquisition section")
+        self.descriptionLabel = QLabel()
+        self.descriptionLabel.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        self.descriptionLabel.setText("Welcome in data acquisition section")
 
-        # TODO: Implement RadioButton for choosing training with epocing duration or production
+        # GroupBox of RadioButton for training or controlling mode
         self.flickeringModeGroup = FlickeringModeGroupBox()
 
-
-
-        # TODO: Implement frequencies options
-
         # Starting Button
-        starting_button = QPushButton()
-        starting_button.setText("Start")
-        starting_button.clicked.connect(self.start_clicked)
+        self.startingButton = QPushButton()
+        self.startingButton.setText("Start")
+        self.startingButton.clicked.connect(self.startClicked)
 
         # Add widgets to the vertical layout
-        v_layout.addWidget(logo_label)
-        v_layout.addWidget(description_label)
-        v_layout.addWidget(self.flickeringModeGroup)
-        # v_layout.addWidget(training)
-        # v_layout.addWidget(production)
-        v_layout.addWidget(starting_button)
+        self.vLayout.addWidget(self.logoLabel)
+        self.vLayout.addWidget(self.descriptionLabel)
+        self.vLayout.addWidget(self.flickeringModeGroup)
+        self.vLayout.addWidget(self.startingButton)
 
-        self.setLayout(v_layout)
+        self.setLayout(self.vLayout)
 
-        # Flickering box initialization
+        # Stimulus initialization
         self.screen = None
         self.clock = None
-        self.flickering = None
+        self.stimulus = None
         self.done = False
-        self.display = [1024, 768]
+        self.display = [self.stimulusScreenWidth, self.stimulusScreenHeight]
 
-    def startFlickering(self):
+    def initStimulusGUI(self, isTraining: bool):
         """
-        Start the flickering boxes GUI.
+        Initialize and display the SSVEP Stimulus GUI.
+
+        :param isTraining: bool value to give an indication to run training stimulus mode.
         """
+
         pygame.init()
-        pygame.display.set_caption("Flickering Box")
+        pygame.display.set_caption("SSVEP Stimulus")
         self.screen = pygame.display.set_mode(self.display)
 
         self.done = False
         self.clock = pygame.time.Clock()
-        self.flickering = FlickeringManager(self.screen)
+        self.stimulus = stimulusManager(self.screen)
 
-        self.flickering.add(self.flickering.LEFT, 6)  # frame: 6, HZ => 10.0
-        self.flickering.add(self.flickering.TOP, 4)  # frame: 4, HZ => 15.0
-        self.flickering.add(self.flickering.RIGHT, 5)  # frame: 5, HZ => 12.0
-        self.flickering.add(self.flickering.DOWN, 8)  # frame: 8, HZ => 7.5
-        self.flickering.add(self.flickering.CENTER, 10)  # frame: 10, HZ => 6.0
+        frequencies = [self.LEFT_FREQ, self.TOP_FREQ, self.RIGHT_FREQ, self.DOWN_FREQ]
 
-        while not self.done:
-            for event in pygame.event.get():
-                if (event.type == pygame.KEYUP) or (event.type == pygame.KEYDOWN):
-                    if event.key == pygame.K_ESCAPE:
+        for i in range(len(frequencies)):
+            self.done = False
+
+            if isTraining:
+                self.stimulus.add(self.stimulus.CENTER, frequencies[i])
+            else:
+                # Controlling mode is ON
+                self.stimulus.add(self.stimulus.LEFT, self.LEFT_FREQ)
+                self.stimulus.add(self.stimulus.TOP, self.TOP_FREQ)
+                self.stimulus.add(self.stimulus.RIGHT, self.RIGHT_FREQ)
+                self.stimulus.add(self.stimulus.DOWN, self.DOWN_FREQ)
+
+            startingTime = time.time()
+            while not self.done:
+                if isTraining:
+                    if (time.time() - startingTime) >= self.EPOC_DURATION:
+                        if i < len(frequencies) - 1:
+                            pygame.time.wait(self.BREAK_DURATION)
+                        break
+
+                for event in pygame.event.get():
+                    if (event.type == pygame.KEYUP) or (event.type == pygame.KEYDOWN):
+                        if event.key == pygame.K_ESCAPE:
+                            self.done = True
+                    if event.type == pygame.QUIT:
                         self.done = True
-                if event.type == pygame.QUIT:
-                    self.done = True
 
-            self.screen.fill((0, 0, 0))
-            self.clock.tick(60)  # 16 ms between frames ~ 60FPS
-            self.flickering.process()
-            self.flickering.draw()
-            pygame.display.flip()
+                self.screen.fill((0, 0, 0))
+                self.clock.tick(60)  # 16 ms between frames ~ 60FPS
+                self.stimulus.process()
+                self.stimulus.draw()
+                pygame.display.flip()
 
+            if not isTraining or self.done:
+                break
         pygame.quit()
 
-    def start_clicked(self):
+    def startClicked(self):
         """
         Click listener for the starting button
         """
-        print("Countdown Started")
-        print(self.flickeringModeGroup.isTraining())
-        print(self.flickeringModeGroup.isControlling())
-        # self.Countdown = CountdownMessageBox(2)
-        # self.Countdown.show()
-        # self.startFlickering()
-
-        # main.main()
-        # self.f = FlickeringBox(20, 5)
-        # self.f.show()
+        self.initStimulusGUI(self.flickeringModeGroup.isTraining())
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    # window = FlickeringBox(15)
-    # window.show()
     app.exec()
-
-    # # Print frames with the corresponding HZ
-    # for i in range(1, 61):
-    #     print("frame: {f}, HZ => {hz}".format(f=i, hz=60 / i))
