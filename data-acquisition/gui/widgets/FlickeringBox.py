@@ -2,56 +2,76 @@ from pygame import Surface, Rect
 
 
 class Checkerboard:
-    def create(self, a=5, b=5, w=100, h=100):
-        k = w / a
-        l = h / b
+    def create(self, noOfHorizontalBoxes: int = 5, noOfVerticalBoxes: int = 5, checkerboardWidth: int = 100, checkerboardHeight: int = 100) -> Surface:
+        """
+
+        :param noOfHorizontalBoxes: Number of boxes in the vertical line or X-axis in the checkerboard.
+        :param noOfVerticalBoxes: Number of boxes in the horizontal line or Y-axis in the checkerboard.
+        :param checkerboardWidth: The width checkerboard.
+        :param checkerboardHeight: The height of checkerboard.
+        :return: pygame.Surface which a pygame object for representing images.
+        """
+        boxWidth = checkerboardWidth / noOfHorizontalBoxes
+        boxHeight = checkerboardHeight / noOfVerticalBoxes
 
         white = (255, 255, 255)
         black = (0, 0, 0)
 
-        surf = Surface((w, h))
-        c = black if self else white
-        surf.fill(c)
+        surf = Surface((checkerboardWidth, checkerboardHeight))
+        boxColor = black if self else white
+        surf.fill(boxColor)
 
-        for i in range(0, a):
-            for j in range(0, b):
-                c = white if c == black else black
-                r = Rect(k * i, l * j, k, l)
-                surf.fill(c, r)
+        for i in range(0, noOfHorizontalBoxes):
+            for j in range(0, noOfVerticalBoxes):
+                boxColor = white if boxColor == black else black
+                rect = Rect(boxWidth * i, boxHeight * j, boxWidth, boxHeight)
+                surf.fill(boxColor, rect)
         return surf
 
 
 IMAGES = [
     Checkerboard.create(0),
-    Checkerboard.create(1)
+    Checkerboard.create(1),
 ]
 A = IMAGES[0].get_width()
 
 
 class FlickeringManager:
+
     def __init__(self, screen):
         self.flickies = []
         self.screen = screen
 
+        # Box position constants
+        self.TOP = 0
+        self.RIGHT = 1
+        self.DOWN = 2
+        self.LEFT = 3
+        self.CENTER = 4
+
     def addFlicky(self, f):
         self.flickies.append(f)
 
-    def add(self, location, frames):
+    def add(self, position, frames):
         w, h = self.screen.get_size()
-        if location == 'left':
+        if position == self.LEFT:
             x = 0
             y = h / 2 - A / 2
-        elif location == 'right':
+        elif position == self.RIGHT:
             x = w - A
             y = h / 2 - A / 2
-        elif location == 'top':
+        elif position == self.TOP:
             y = 0
             x = w / 2 - A / 2
-        elif location == 'bottom':
+        elif position == self.DOWN:
             y = h - A
             x = w / 2 - A / 2
+        elif position == self.CENTER:
+            x = w / 2 - A / 2
+            y = h / 2 - A / 2
         else:
-            raise ValueError("location %s unknown" % location)
+            raise ValueError("location %s unknown" % position)
+
         f = Flicky(x, y, frames)
         self.flickies.append(f)
 
