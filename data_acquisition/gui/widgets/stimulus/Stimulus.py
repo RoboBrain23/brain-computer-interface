@@ -5,7 +5,6 @@ import pygame
 from data_acquisition.gui.widgets.stimulus.Checkerboard import Checkerboard
 from data_acquisition.gui.widgets.stimulus.Flicky import Flicky
 
-
 IMAGES = [
     Checkerboard.create(0),
     Checkerboard.create(1),
@@ -15,10 +14,18 @@ A = IMAGES[0].get_width()
 
 class Stimulus:
 
-    def __init__(self, screen, isFullScreen, stimulusScreenWidth, stimulusScreenHeight, frequencies, epoc_duration, break_duration):
+    def __init__(self, isFullScreen: bool, stimulusScreenWidth: int, stimulusScreenHeight: int, frequencies: list, epoc_duration: int,
+                 break_duration: int):
+        """
 
+        :param isFullScreen: Indicator to run stimulus in a full-screen mode
+        :param stimulusScreenWidth: The width of the stimulus screen
+        :param stimulusScreenHeight: The Height of the stimulus screen
+        :param frequencies: List of the boxes frequencies in this order (Top, Right, Down, Left)
+        :param epoc_duration: The duration of the Epoc
+        :param break_duration: The duration of the break
+        """
         self.flickies = []
-        self.screen = screen
 
         self.isFullScreen = isFullScreen
         self.stimulusScreenWidth = stimulusScreenWidth
@@ -27,6 +34,8 @@ class Stimulus:
 
         self.clock = None
         self.done = False
+        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN) if self.isFullScreen \
+            else pygame.display.set_mode(self.display)
 
         # Box position constants
         self.TOP = 0
@@ -55,7 +64,6 @@ class Stimulus:
 
         pygame.init()
         pygame.display.set_caption("SSVEP Stimulus")
-        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN) if self.isFullScreen else pygame.display.set_mode(self.display)
 
         self.done = False
         self.clock = pygame.time.Clock()

@@ -4,7 +4,7 @@ import time
 import pygame
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QCheckBox
 
 from data_acquisition.gui.widgets.FlickringModeGroupBox import FlickeringModeGroupBox
 from data_acquisition.gui.widgets.LogoLabel import LogoLabel
@@ -19,7 +19,7 @@ class MainWindow(QWidget):
         # TODO: Customize these configurations as you like.
         # Start of configurations
 
-        self.isFullScreen = True
+        self.isFullScreen = False
         self.stimulusScreenWidth = 1024
         self.stimulusScreenHeight = 768
 
@@ -56,6 +56,10 @@ class MainWindow(QWidget):
         # GroupBox of RadioButton for training or controlling mode
         self.flickeringModeGroup = FlickeringModeGroupBox()
 
+        # CheckBox for full-screen mode
+        self.fullScreenCheckBox = QCheckBox("Full Screen mode")
+        self.fullScreenCheckBox.setChecked(self.isFullScreen)
+
         # Starting Button
         self.startingButton = QPushButton()
         self.startingButton.setText("Start")
@@ -65,6 +69,7 @@ class MainWindow(QWidget):
         self.vLayout.addWidget(self.logoLabel)
         self.vLayout.addWidget(self.descriptionLabel)
         self.vLayout.addWidget(self.flickeringModeGroup)
+        self.vLayout.addWidget(self.fullScreenCheckBox)
         self.vLayout.addWidget(self.startingButton)
 
         self.setLayout(self.vLayout)
@@ -73,7 +78,8 @@ class MainWindow(QWidget):
         """
         Click listener for the starting button
         """
-        self.stimulus = Stimulus(self.screen, self.isFullScreen, self.stimulusScreenWidth, self.stimulusScreenHeight, self.frequencies,
+        self.isFullScreen = self.fullScreenCheckBox.isChecked()
+        self.stimulus = Stimulus(self.isFullScreen, self.stimulusScreenWidth, self.stimulusScreenHeight, self.frequencies,
                                  self.EPOC_DURATION, self.BREAK_DURATION)
         self.stimulus.run(self.flickeringModeGroup.isTraining())
 
