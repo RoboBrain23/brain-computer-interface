@@ -2,12 +2,13 @@ import sys
 import time
 
 import pygame
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton
 
-from widgets.FlickringModeGroupBox import FlickeringModeGroupBox
-from widgets.LogoLabel import LogoLabel
-from widgets.Stimulus import FlickeringManager as stimulusManager
+from data_acquisition.gui.widgets.FlickringModeGroupBox import FlickeringModeGroupBox
+from data_acquisition.gui.widgets.LogoLabel import LogoLabel
+from data_acquisition.gui.widgets.stimulus.Stimulus import Stimulus
 
 
 class MainWindow(QWidget):
@@ -85,7 +86,8 @@ class MainWindow(QWidget):
 
         self.done = False
         self.clock = pygame.time.Clock()
-        self.stimulus = stimulusManager(self.screen)
+        self.stimulus = Stimulus(self.screen)
+        # self.stimulus = stimulus.FlickeringManager(self.screen)
 
         frequencies = [self.LEFT_FREQ, self.TOP_FREQ, self.RIGHT_FREQ, self.DOWN_FREQ]
 

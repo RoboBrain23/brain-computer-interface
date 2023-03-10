@@ -7,8 +7,8 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 packages_path = os.path.join(dir_path, "cyKit")
 sys.path.append(packages_path)
 
-import cyPyWinUSB as hid
-from cyCrypto.Cipher import AES
+import data_acquisition.modules.headset.cyKit.cyPyWinUSB as hid
+from data_acquisition.modules.headset.cyKit.cyCrypto.Cipher import AES
 
 tasks = queue.Queue()
 
