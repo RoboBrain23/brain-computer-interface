@@ -22,10 +22,12 @@ class MainWindow(QWidget):
         self.stimulusScreenWidth = 1024
         self.stimulusScreenHeight = 768
 
-        self.TOP_FREQ = 9  # HZ => 6.666666666666667
-        self.RIGHT_FREQ = 8  # HZ => 7.5
+        self.TOP_FREQ = 4  # HZ => 15
+        self.RIGHT_FREQ = 5  # HZ => 12
         self.DOWN_FREQ = 7  # HZ => 8.571428571428571
         self.LEFT_FREQ = 6  # HZ => 10.0
+
+        self.frequencies = [self.TOP_FREQ, self.RIGHT_FREQ, self.DOWN_FREQ, self.LEFT_FREQ]
 
         self.EPOC_DURATION = 2  # Seconds
         self.BREAK_DURATION = 2000  # Milliseconds
@@ -66,73 +68,13 @@ class MainWindow(QWidget):
 
         self.setLayout(self.vLayout)
 
-        # Stimulus initialization
-        self.screen = None
-        self.clock = None
-        self.stimulus = None
-        self.done = False
-        self.display = [self.stimulusScreenWidth, self.stimulusScreenHeight]
-
-    def initStimulusGUI(self, isTraining: bool):
-        """
-        Initialize and display the SSVEP Stimulus GUI.
-
-        :param isTraining: bool value to give an indication to run training stimulus mode.
-        """
-
-        pygame.init()
-        pygame.display.set_caption("SSVEP Stimulus")
-        self.screen = pygame.display.set_mode(self.display)
-
-        self.done = False
-        self.clock = pygame.time.Clock()
-        self.stimulus = Stimulus(self.screen)
-        # self.stimulus = stimulus.FlickeringManager(self.screen)
-
-        frequencies = [self.LEFT_FREQ, self.TOP_FREQ, self.RIGHT_FREQ, self.DOWN_FREQ]
-
-        for i in range(len(frequencies)):
-            self.done = False
-
-            if isTraining:
-                self.stimulus.add(self.stimulus.CENTER, frequencies[i])
-            else:
-                # Controlling mode is ON
-                self.stimulus.add(self.stimulus.LEFT, self.LEFT_FREQ)
-                self.stimulus.add(self.stimulus.TOP, self.TOP_FREQ)
-                self.stimulus.add(self.stimulus.RIGHT, self.RIGHT_FREQ)
-                self.stimulus.add(self.stimulus.DOWN, self.DOWN_FREQ)
-
-            startingTime = time.time()
-            while not self.done:
-                if isTraining:
-                    if (time.time() - startingTime) >= self.EPOC_DURATION:
-                        if i < len(frequencies) - 1:
-                            pygame.time.wait(self.BREAK_DURATION)
-                        break
-
-                for event in pygame.event.get():
-                    if (event.type == pygame.KEYUP) or (event.type == pygame.KEYDOWN):
-                        if event.key == pygame.K_ESCAPE:
-                            self.done = True
-                    if event.type == pygame.QUIT:
-                        self.done = True
-
-                self.screen.fill((0, 0, 0))
-                self.clock.tick(60)  # 16 ms between frames ~ 60FPS
-                self.stimulus.process()
-                self.stimulus.draw()
-                pygame.display.flip()
-
-            if not isTraining or self.done:
-                break
-        pygame.quit()
-
     def startClicked(self):
         """
         Click listener for the starting button
         """
-        self.initStimulusGUI(self.flickeringModeGroup.isTraining())
+        self.stimulus = Stimulus(self.screen, self.stimulusScreenWidth, self.stimulusScreenHeight, self.frequencies,
+                                 self.EPOC_DURATION, self.BREAK_DURATION)
+        self.stimulus.run(self.flickeringModeGroup.isTraining())
 
 
 if __name__ == '__main__':

@@ -1,21 +1,30 @@
+import time
+
+import pygame
+
 from data_acquisition.gui.widgets.stimulus.Checkerboard import Checkerboard
 from data_acquisition.gui.widgets.stimulus.Flicky import Flicky
 
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
 
 IMAGES = [
-            Checkerboard.create(0),
-            Checkerboard.create(1),
-        ]
+    Checkerboard.create(0),
+    Checkerboard.create(1),
+]
 A = IMAGES[0].get_width()
 
 
 class Stimulus:
 
-    def __init__(self, screen):
+    def __init__(self, screen, stimulusScreenWidth, stimulusScreenHeight, frequencies, epoc_duration, brack_duration):
         self.flickies = []
         self.screen = screen
+        self.stimulusScreenWidth = stimulusScreenWidth
+        self.stimulusScreenHeight = stimulusScreenHeight
+
+        self.clock = None
+        self.stimulus = None
+        self.done = False
+        self.display = [self.stimulusScreenWidth, self.stimulusScreenHeight]
 
         # Box position constants
         self.TOP = 0
@@ -23,6 +32,68 @@ class Stimulus:
         self.DOWN = 2
         self.LEFT = 3
         self.CENTER = 4
+
+        # Stimulus Configurations
+        self.frequencies = frequencies
+
+        self.TOP_FREQ = frequencies[0]
+        self.RIGHT_FREQ = frequencies[1]
+        self.DOWN_FREQ = frequencies[2]
+        self.LEFT_FREQ = frequencies[3]
+
+        self.EPOC_DURATION = epoc_duration  # Seconds
+        self.BREAK_DURATION = brack_duration  # Milliseconds
+
+    def run(self, isTraining: bool):
+        """
+        Initialize and display the SSVEP Stimulus GUI.
+
+        :param isTraining: bool value to give an indication to run training stimulus mode.
+        """
+
+        pygame.init()
+        pygame.display.set_caption("SSVEP Stimulus")
+        self.screen = pygame.display.set_mode(self.display)
+
+        self.done = False
+        self.clock = pygame.time.Clock()
+
+        for i in range(len(self.frequencies)):
+            self.done = False
+
+            if isTraining:
+                self.add(self.CENTER, self.frequencies[i])
+            else:
+                # Controlling mode is ON
+                self.add(self.TOP, self.TOP_FREQ)
+                self.add(self.RIGHT, self.RIGHT_FREQ)
+                self.add(self.DOWN, self.DOWN_FREQ)
+                self.add(self.LEFT, self.LEFT_FREQ)
+
+            startingTime = time.time()
+            while not self.done:
+                if isTraining:
+                    if (time.time() - startingTime) >= self.EPOC_DURATION:
+                        if i < len(self.frequencies) - 1:
+                            pygame.time.wait(self.BREAK_DURATION)
+                        break
+
+                for event in pygame.event.get():
+                    if (event.type == pygame.KEYUP) or (event.type == pygame.KEYDOWN):
+                        if event.key == pygame.K_ESCAPE:
+                            self.done = True
+                    if event.type == pygame.QUIT:
+                        self.done = True
+
+                self.screen.fill((0, 0, 0))
+                self.clock.tick(60)  # 16 ms between frames ~ 60FPS
+                self.process()
+                self.draw()
+                pygame.display.flip()
+
+            if not isTraining or self.done:
+                break
+        pygame.quit()
 
     def addFlicky(self, f):
         self.flickies.append(f)
