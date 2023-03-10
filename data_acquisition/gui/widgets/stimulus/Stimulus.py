@@ -15,16 +15,18 @@ A = IMAGES[0].get_width()
 
 class Stimulus:
 
-    def __init__(self, screen, stimulusScreenWidth, stimulusScreenHeight, frequencies, epoc_duration, brack_duration):
+    def __init__(self, screen, isFullScreen, stimulusScreenWidth, stimulusScreenHeight, frequencies, epoc_duration, break_duration):
+
         self.flickies = []
         self.screen = screen
+
+        self.isFullScreen = isFullScreen
         self.stimulusScreenWidth = stimulusScreenWidth
         self.stimulusScreenHeight = stimulusScreenHeight
+        self.display = [self.stimulusScreenWidth, self.stimulusScreenHeight]
 
         self.clock = None
-        self.stimulus = None
         self.done = False
-        self.display = [self.stimulusScreenWidth, self.stimulusScreenHeight]
 
         # Box position constants
         self.TOP = 0
@@ -42,7 +44,7 @@ class Stimulus:
         self.LEFT_FREQ = frequencies[3]
 
         self.EPOC_DURATION = epoc_duration  # Seconds
-        self.BREAK_DURATION = brack_duration  # Milliseconds
+        self.BREAK_DURATION = break_duration  # Milliseconds
 
     def run(self, isTraining: bool):
         """
@@ -53,7 +55,7 @@ class Stimulus:
 
         pygame.init()
         pygame.display.set_caption("SSVEP Stimulus")
-        self.screen = pygame.display.set_mode(self.display)
+        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN) if self.isFullScreen else pygame.display.set_mode(self.display)
 
         self.done = False
         self.clock = pygame.time.Clock()

@@ -19,6 +19,7 @@ class MainWindow(QWidget):
         # TODO: Customize these configurations as you like.
         # Start of configurations
 
+        self.isFullScreen = True
         self.stimulusScreenWidth = 1024
         self.stimulusScreenHeight = 768
 
@@ -72,7 +73,7 @@ class MainWindow(QWidget):
         """
         Click listener for the starting button
         """
-        self.stimulus = Stimulus(self.screen, self.stimulusScreenWidth, self.stimulusScreenHeight, self.frequencies,
+        self.stimulus = Stimulus(self.screen, self.isFullScreen, self.stimulusScreenWidth, self.stimulusScreenHeight, self.frequencies,
                                  self.EPOC_DURATION, self.BREAK_DURATION)
         self.stimulus.run(self.flickeringModeGroup.isTraining())
 
