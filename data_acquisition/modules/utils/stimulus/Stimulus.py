@@ -2,8 +2,8 @@ import time
 
 import pygame
 
-from data_acquisition.gui.widgets.stimulus.Checkerboard import Checkerboard
-from data_acquisition.gui.widgets.stimulus.Flicky import Flicky
+from data_acquisition.modules.utils.stimulus.Checkerboard import Checkerboard
+from data_acquisition.modules.utils.stimulus.Flicky import Flicky
 
 IMAGES = [
     Checkerboard.create(0),
