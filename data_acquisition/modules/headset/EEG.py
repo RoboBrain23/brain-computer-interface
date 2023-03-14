@@ -10,6 +10,10 @@ sys.path.append(packages_path)
 import data_acquisition.modules.headset.cyKit.cyPyWinUSB as hid
 from data_acquisition.modules.headset.cyKit.cyCrypto.Cipher import AES
 
+from data_acquisition.modules.utils.Logger import Logger
+
+logger = Logger(__name__)
+
 tasks = queue.Queue()
 
 
@@ -89,69 +93,133 @@ class EEG(object):
         print("version_number : " + str(self.hid.version_number))
         print("serial_number : " + self.hid.serial_number)
 
-    def start_recording(self, file_path: str, recording_duration: int, delay_before_recording: int):
+    def start_recording(self, csv_data_file: str, csv_meta_data_file: str, recording_duration: int,
+                        delay_before_recording: int, rest_duration: int,
+                        frequencies: dict):
         """
         Start recording EEG data into .csv file
 
+        :param csv_data_file: The path of the csv file which will be used for recording EEG data.
 
-        :param file_path: The path of the csv file which will be used for recording EEG data.
+        :param csv_meta_data_file: The path of the csv file which will be used for recording the direction and its corresponding starting row.
 
         :param recording_duration: Duration of recording session (EPOC duration)
 
         :param delay_before_recording: Delay before recording session for preparation period
 
-        :type file_path: str
+        :param rest_duration: The rest duration, which at that time the stimulus is stopped.
+
+        :param frequencies: Dictionary of the direction as a key and a frame as a value which freq=60/frame
+
+        :type csv_data_file: str
+
+        :type csv_meta_data_file: str
 
         :type recording_duration: int
 
         :type delay_before_recording: int
+
+        :type rest_duration: int
+
+        :type frequencies: dict
         """
 
-        # Delay the recording process if needed.
-        if delay_before_recording > 0:
-            print("delay starting for {} seconds".format(delay_before_recording))
-            time.sleep(delay_before_recording)
+        # Open the targeted csv file for the first time to start recording process.
 
-        print("delays is finished!")
-        starting_time = time.time()
+        data_header = "F3, FC5, AF3, F7, T7, P7, O1, O2, P8, T8, F8, AF4, FC6, F4, label, frequency"
+        meta_data_header = "starting_row, label"
 
-        self._recording_state = True
+        raw_data_file = self.open_file(csv_data_file, data_header)
+        meta_data_file = self.open_file(csv_meta_data_file, meta_data_header)
+
+        logger.info(f"The preparation time: {delay_before_recording} sec, "
+                    f"recording time: {recording_duration} sec, "
+                    f"rest time: {rest_duration} sec with a total recording time of {recording_duration + rest_duration} sec, "
+                    f"a total time of {delay_before_recording + recording_duration + rest_duration} sec for the one EPOC")
+        log_t = 0  # For logging
+        starting_time = 0
+        current_row = 1
+
+        # Append the raw data into CSV file.
         try:
-            record_csv_file = open(file_path, "a+", newline='')
+            for direction, frame in frequencies.items():
+                logger.info(f"at t = {log_t} sec:")
+                current_direction = direction
+                current_frequency = 60 / frame
 
-            csv_header = "F3, FC5, AF3, F7, T7, P7, O1, O2, P8, T8, F8, AF4, FC6, F4"
+                # Delay the recording process if needed.
+                logger.info("preparation stage started for {} seconds".format(delay_before_recording))
+                self.preparation_delay(delay_before_recording)
+                logger.info("preparation stage is finished!")
 
-            record_csv_file.write(csv_header + "\n")
+                log_t += delay_before_recording
+                logger.info(f"at t = {log_t} sec:")
+                logger.info(f"Recording stage started with direction {current_direction} and {current_frequency} HZ")
 
-            record_csv_file.flush()
-            os.fsync(record_csv_file.fileno())
+                starting_time = time.time()
+                self._recording_state = True
 
-            # Append the raw data into CSV file.
-            try:
+                logger.info(f"Current row: {current_row}, Current direction: {current_direction}")
+                meta_data = f"{current_row}, {current_direction}"
+                meta_data_file.write(meta_data + "\n")
+
                 while self._recording_state:
 
-                    # Stop recording after the given duration
-                    if time.time() - starting_time > recording_duration:
-                        print("Time is up after {} seconds".format(time.time() - starting_time))
+                    # Stop recording after the recording and rest duration.
+                    if time.time() - starting_time > recording_duration + rest_duration:
+                        log_t += rest_duration
+                        logger.info(f"at t = {log_t} sec:")
+                        logger.info(f"This epoc is ended after {time.time() - starting_time} seconds")
                         break
 
                     if self.is_tasks_empty():
                         continue
 
-                    record_csv_file.write(self.get_data() + "\n")
-                    # print(self.get_data())    # print the recorded data.
-            except KeyboardInterrupt:
-                print("You stop the recording process!")
-            finally:
-                record_csv_file.close()
-                print(
-                    "The recording session is done after {} seconds and saved at :".format(time.time() - starting_time))
-                print("File Path>> " + file_path)
+                    # Change the direction and frequency to the rest value after epoc duration
+                    if recording_duration < time.time() - starting_time < recording_duration + rest_duration and current_direction != "rest":
+                        log_t += recording_duration
+                        logger.info(f"at t = {log_t} sec:")
+                        logger.info(
+                            "Changing the current_direction from {} ({})HZ to rest (0)HZ".format(current_direction,
+                                                                                                 current_frequency))
+                        current_direction = "rest"
+                        current_frequency = 0
+                        logger.info(f"Current row: {current_row}, Current direction: {current_direction}")
+                        meta_data = f"{current_row}, {current_direction}"
+                        meta_data_file.write(meta_data + "\n")
+                        # logger.warning(f"Current row: {current_row}, Current direction: {current_direction}")
 
+                    current_row += 1
+
+                    raw_data = self.get_data() + ", {}, {}".format(current_direction, current_frequency)
+
+                    raw_data_file.write(raw_data + "\n")
+
+                    # print(self.get_data())    # print the recorded data.
+        except KeyboardInterrupt:
+            print("You stop the recording process!")
+        finally:
+            raw_data_file.close()
+            meta_data_file.close()
+            logger.info(
+                "The recording session is done after {} seconds and saved at :".format(time.time() - starting_time))
+            logger.info("File Path>> " + csv_data_file)
+
+    def preparation_delay(self, delay_before_recording):
+        if delay_before_recording > 0:
+            time.sleep(delay_before_recording)
+
+    def open_file(self, file_path, header):
+        try:
+            file = open(file_path, "a+", newline='')
+            file.write(header + "\n")
+            file.flush()
+            os.fsync(file.fileno())
+
+            return file
         except Exception as e:
             print("Recording err:")
             print(e)
-        pass
 
     def stop_recording(self):
         self._recording_state = False
