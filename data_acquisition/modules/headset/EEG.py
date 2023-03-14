@@ -17,6 +17,7 @@ class EEG(object):
 
     def __init__(self):
 
+        self._recording_state = False
         self.hid = None
         self.delimiter = ", "
 
@@ -79,7 +80,7 @@ class EEG(object):
         """
         return tasks.empty()
 
-    def get_headset_info(self):
+    def print_headset_info(self):
 
         print("vendor_name : " + self.hid.vendor_name)
         print("vendor_id : " + str(self.hid.vendor_id))
@@ -88,59 +89,69 @@ class EEG(object):
         print("version_number : " + str(self.hid.version_number))
         print("serial_number : " + self.hid.serial_number)
 
-    def create_csv_file(self, prefix="", path=os.path.realpath("")):
+    def start_recording(self, file_path: str, recording_duration: int, delay_before_recording: int):
         """
-        Creates a CSV file for recording EEG data with a unique file name based on the current date and time.
+        Start recording EEG data into .csv file
 
-        :param prefix: The prefix that will be added at the beginning of the CSV file name.
-        :param path: The path of the records folder.
-        :return: The full path of the CSV file.
+
+        :param file_path: The path of the csv file which will be used for recording EEG data.
+
+        :param recording_duration: Duration of recording session (EPOC duration)
+
+        :param delay_before_recording: Delay before recording session for preparation period
+
+        :type file_path: str
+
+        :type recording_duration: int
+
+        :type delay_before_recording: int
         """
 
-        # Create a folder for records.
-        if not os.path.exists(path + "/EEG-Records"):
-            try:
-                os.mkdir(path + "/EEG-Records")
-            except Exception as msg:
-                print("Failed to Create Directory: '" + path + "/EEG-Records/' \r\n Please Check Permissions. ")
-                print(str(msg))
-                return
+        # Delay the recording process if needed.
+        if delay_before_recording > 0:
+            print("delay starting for {} seconds".format(delay_before_recording))
+            time.sleep(delay_before_recording)
 
-        # Add timestamp to the name of recorded file.
-        file_name = prefix + "_" if prefix != "" else ""
-        file_name += str(time.strftime("%d.%m.%y_%H.%M.%S"))
+        print("delays is finished!")
+        starting_time = time.time()
 
-        # Create a CSV record file.
-        file_path = path + "/EEG-Records/" + file_name + '.csv'
-
-        return file_path
-
-    def record_csv(self):
-        """
-        Record the EPOC+ raw data in a CSV file
-        """
-        file_path = self.create_csv_file()
-
+        self._recording_state = True
         try:
-            record_file = open(file_path, "a+", newline='')
+            record_csv_file = open(file_path, "a+", newline='')
 
-            csv_header = "F3 FC5 AF3 F7 T7 P7 O1 O2 P8 T8 F8 AF4 FC6 F4"
+            csv_header = "F3, FC5, AF3, F7, T7, P7, O1, O2, P8, T8, F8, AF4, FC6, F4"
 
-            record_file.write(csv_header + "\n")
+            record_csv_file.write(csv_header + "\n")
 
-            record_file.flush()
-            os.fsync(record_file.fileno())
+            record_csv_file.flush()
+            os.fsync(record_csv_file.fileno())
 
             # Append the raw data into CSV file.
             try:
-                while 1:
-                    while self.is_tasks_empty():
-                        pass
-                    record_file.write(self.get_data() + "\n")
-                    print(self.get_data())
+                while self._recording_state:
+
+                    # Stop recording after the given duration
+                    if time.time() - starting_time > recording_duration:
+                        print("Time is up after {} seconds".format(time.time() - starting_time))
+                        break
+
+                    if self.is_tasks_empty():
+                        continue
+
+                    record_csv_file.write(self.get_data() + "\n")
+                    # print(self.get_data())    # print the recorded data.
             except KeyboardInterrupt:
-                record_file.close()
+                print("You stop the recording process!")
+            finally:
+                record_csv_file.close()
+                print(
+                    "The recording session is done after {} seconds and saved at :".format(time.time() - starting_time))
                 print("File Path>> " + file_path)
 
         except Exception as e:
+            print("Recording err:")
             print(e)
+        pass
+
+    def stop_recording(self):
+        self._recording_state = False
