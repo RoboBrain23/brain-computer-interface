@@ -2,15 +2,20 @@ import os
 import time
 
 
-def create_csv_file(path: str = os.path.realpath(""), folder_name: str = "EEG_Records", prefix: str = "") -> str:
+def create_csv_file(prefix: str, file_name: str, suffix: str = "", path: str = os.path.realpath(""),
+                    folder_name: str = "EEG_Records") -> str:
     """
     Creates a CSV file for recording EEG data with a unique file name based on the current date and time.
+
+    :param prefix: The prefix that will be added at the beginning of the CSV file name.
+
+    :param file_name: The name of the csv file.
+
+    :param suffix: The suffix that will be added at the end of the CSV file name.
 
     :param path: The path of the folder that contain the records folder.
 
     :param folder_name: The records folder name.
-
-    :param prefix: The prefix that will be added at the beginning of the CSV file name.
 
     :return: The full path of the CSV file.
     """
@@ -26,8 +31,10 @@ def create_csv_file(path: str = os.path.realpath(""), folder_name: str = "EEG_Re
             return ""
 
     # Add timestamp to the name of recorded file.
-    csv_file_name = prefix + "_" if prefix != "" else ""
-    csv_file_name += str(time.strftime("%d.%m.%y_%H.%M.%S"))
+    prefix = f"{prefix}_" if prefix != "" else ""
+    suffix = f"_{suffix}" if suffix != "" else ""
+
+    csv_file_name = f"{prefix}{file_name}{suffix}"
 
     # Create a CSV record file.
     file_path = folder_full_path + "/" + csv_file_name + '.csv'
