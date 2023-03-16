@@ -2,12 +2,12 @@ import pygame
 import time
 
 from data_acquisition.config.config import *
-from Box import Box
+from data_acquisition.modules.utils.stimulus.blankboard.Box import Box
 
 
 class BlankboardStimulus:
     def __init__(self, frequencies: dict, preparation_duration: int, stimulation_duration: int,
-                 rest_duration: int, is_full_screen: bool = True):
+                 rest_duration: int, is_full_screen: bool = False):
         """
 
         :param frequencies: Dictionary of the boxes frequencies in this order (Top, Right, Down, Left)
@@ -66,7 +66,9 @@ class BlankboardStimulus:
             delta_time = current_time - start_time
 
             # Clear the screen
-            self._screen.fill((0, 0, 0))
+            self._screen.fill(BLACK)
+
+            self._display_info()
 
             # Draw the box if the elapsed time is less than half the period
             for box in self._boxes:
@@ -89,6 +91,12 @@ class BlankboardStimulus:
 
     def close_stimulation(self):
         self._done = True
+
+    def _display_info(self):
+        for box in self._boxes:
+            font = pygame.font.SysFont('Aerial', 30)
+            text = font.render(f"{box.get_direction()} : {box.get_frequency()} HZ", False, WHITE)
+            self._screen.blit(text, (box.get_left(), box.get_top()))
 
 
 if __name__ == '__main__':

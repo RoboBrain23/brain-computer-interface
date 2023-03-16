@@ -48,9 +48,18 @@ class Box:
         return self._color
 
     def rect(self):
-        left, top = self.get_position(self._position)
-        rect = pygame.Rect(left, top, BOX_WIDTH, BOX_HEIGHT)
+        self._left, self._top = self.get_position(self._position)
+        rect = pygame.Rect(self._left, self._top, BOX_WIDTH, BOX_HEIGHT)
         return rect
+
+    def get_left(self):
+        return self._left
+
+    def get_top(self):
+        return self._top
+
+    def get_direction(self):
+        return self._position
 
     def toggle_color(self):
         """
