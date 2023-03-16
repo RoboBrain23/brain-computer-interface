@@ -1,1 +1,1 @@
-from . import Stimulus
+from .checkerboard import CheckerboardStimulus
