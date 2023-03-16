@@ -22,13 +22,7 @@ def create_csv_file(prefix: str, file_name: str, suffix: str = "", path: str = o
 
     # Create a folder for records.
     folder_full_path = path + '/' + folder_name
-    if not os.path.exists(folder_full_path):
-        try:
-            os.mkdir(folder_full_path)
-        except Exception as msg:
-            print("Failed to Create Directory: '" + folder_full_path + "' \r\n Please Check Permissions. ")
-            print(str(msg))
-            return ""
+    create_folder(folder_full_path)
 
     # Add timestamp to the name of recorded file.
     prefix = f"{prefix}_" if prefix != "" else ""
@@ -40,3 +34,13 @@ def create_csv_file(prefix: str, file_name: str, suffix: str = "", path: str = o
     file_path = folder_full_path + "/" + csv_file_name + '.csv'
 
     return file_path
+
+
+def create_folder(folder_full_path):
+    if not os.path.exists(folder_full_path):
+        try:
+            os.mkdir(folder_full_path)
+        except Exception as msg:
+            print("Failed to Create Directory: '" + folder_full_path + "' \r\n Please Check Permissions. ")
+            print(str(msg))
+            return ""
