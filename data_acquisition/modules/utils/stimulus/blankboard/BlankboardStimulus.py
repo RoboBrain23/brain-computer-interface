@@ -23,20 +23,20 @@ class BlankboardStimulus:
         """
         self._done = False
         self._frequencies = frequencies
-        self.preparation_duration = preparation_duration
-        self.stimulation_duration = stimulation_duration
-        self.rest_duration = rest_duration
-        self.is_full_screen = is_full_screen
+        self._preparation_duration = preparation_duration
+        self._stimulation_duration = stimulation_duration
+        self._rest_duration = rest_duration
+        self._is_full_screen = is_full_screen
 
-        self.screen_width = 1024
-        self.screen_height = 780
+        self._screen_width = 1024
+        self._screen_height = 780
 
         # Create the screen
         self._screen = pygame.display.set_mode((0, 0),
-                                               pygame.FULLSCREEN) if self.is_full_screen else pygame.display.set_mode(
-            [self.screen_width, self.screen_height])
+                                               pygame.FULLSCREEN) if self._is_full_screen else pygame.display.set_mode(
+            [self._screen_width, self._screen_height])
 
-        self._boxes = []
+        self._boxes = {}
         self._create_boxes()
 
     def _create_boxes(self):
@@ -49,51 +49,66 @@ class BlankboardStimulus:
 
         for position, frequency in self._frequencies.items():
             box = Box(position, frequency, screen_width, screen_height)
-            self._boxes.append(box)
+            self._boxes[position] = box
 
     def run(self):
         pygame.init()
 
-        # Set the initial time
-        start_time = time.time()
+        for position in self._frequencies:
+            self._boxes[position].toggle_color()
 
-        # Main loop
-        while not self._done:
-            # Get the current time
-            current_time = time.time()
+            # Set the initial time
+            start_time = time.time()
 
-            # Calculate the time elapsed since the last frame
-            delta_time = current_time - start_time
+            # Main loop
+            while not self._done:
 
-            # Clear the screen
-            self._screen.fill(BLACK)
+                # Get the current time
+                current_time = time.time()
 
-            self._display_info()
+                # Calculate the time elapsed since the last frame
+                delta_time = current_time - start_time
 
-            # Draw the box if the elapsed time is less than half the period
-            for box in self._boxes:
-                curr_frequency = box.get_frequency()
-                curr_color = box.get_color()
+                # Clear the screen
+                self._screen.fill(BLACK)
 
-                if delta_time % (1 / curr_frequency) < 1 / (2 * curr_frequency):
-                    pygame.draw.rect(self._screen, curr_color, box.rect(), border_radius=15)
+                # Displaying box info on the window for testing purpose.
+                self._display_info()
 
-            # Update the screen
-            pygame.display.flip()
+                # Toggle the box color after the preparation time.
+                if time.time() - start_time >= PREPARATION_TIME and self._boxes[position].get_color() == PURPLE:
+                    self._boxes[position].toggle_color()
 
-            for event in pygame.event.get():
-                if (event.type == pygame.KEYUP) or (event.type == pygame.KEYDOWN):
-                    if event.key == pygame.K_ESCAPE:
+                # Displaying boxes until the stimulation time is ended.
+                if time.time() - start_time < PREPARATION_TIME + STIMULATION_TIME:
+                    # Draw the box if the elapsed time is less than half the period
+                    for box in self._boxes.values():
+                        curr_frequency = box.get_frequency()
+                        curr_color = box.get_color()
+
+                        if delta_time % (1 / curr_frequency) < 1 / (2 * curr_frequency):
+                            pygame.draw.rect(self._screen, curr_color, box.rect(), border_radius=BORDER_RADIUS)
+
+                # Stop the stimulus GUI after the session duration.
+                if time.time() - start_time >= PREPARATION_TIME + STIMULATION_TIME + REST_TIME:
+                    break
+
+                # Update the screen
+                pygame.display.flip()
+
+                for event in pygame.event.get():
+                    if (event.type == pygame.KEYUP) or (event.type == pygame.KEYDOWN):
+                        if event.key == pygame.K_ESCAPE:
+                            self._done = True
+                    if event.type == pygame.QUIT:
                         self._done = True
-                if event.type == pygame.QUIT:
-                    self._done = True
         pygame.quit()
 
     def close_stimulation(self):
         self._done = True
 
     def _display_info(self):
-        for box in self._boxes:
+        for box in self._boxes.values():
             font = pygame.font.SysFont('Aerial', 30)
             text = font.render(f"{box.get_direction()} : {box.get_frequency()} HZ", False, WHITE)
             self._screen.blit(text, (box.get_left(), box.get_top()))
