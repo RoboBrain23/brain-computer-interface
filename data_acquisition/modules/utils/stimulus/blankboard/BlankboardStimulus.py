@@ -4,6 +4,10 @@ import time
 from data_acquisition.config.config import *
 from data_acquisition.modules.utils.stimulus.blankboard.Box import Box
 
+from data_acquisition.modules.utils.Logger import Logger, app_logger
+# logger = Logger(__name__)
+logger = app_logger  # Log all in app.log
+
 
 class BlankboardStimulus:
     def __init__(self, frequencies: dict, preparation_duration: int, stimulation_duration: int,
@@ -55,6 +59,8 @@ class BlankboardStimulus:
         pygame.init()
 
         for position in self._frequencies:
+            logged = True
+            logger.info(f"Start PREPARATION, {position} is now PURPLE")
             self._boxes[position].toggle_color()
 
             # Set the initial time
@@ -72,15 +78,18 @@ class BlankboardStimulus:
                 # Clear the screen
                 self._screen.fill(BLACK)
 
-                # Displaying box info on the window for testing purpose.
-                self._display_info()
+                # # Displaying box info on the window for testing purpose.
+                # self._display_info()
 
                 # Toggle the box color after the preparation time.
-                if time.time() - start_time >= PREPARATION_TIME and self._boxes[position].get_color() == PURPLE:
+                if time.time() - start_time >= self._preparation_duration and self._boxes[position].get_color() == PURPLE:
+                    logger.info(f"End PREPARATION, {position} is now BLUE")
+                    logger.info("Start STIMULATION")
                     self._boxes[position].toggle_color()
 
                 # Displaying boxes until the stimulation time is ended.
-                if time.time() - start_time < PREPARATION_TIME + STIMULATION_TIME:
+                if time.time() - start_time < self._preparation_duration + self._stimulation_duration:
+
                     # Draw the box if the elapsed time is less than half the period
                     for box in self._boxes.values():
                         curr_frequency = box.get_frequency()
@@ -88,9 +97,16 @@ class BlankboardStimulus:
 
                         if delta_time % (1 / curr_frequency) < 1 / (2 * curr_frequency):
                             pygame.draw.rect(self._screen, curr_color, box.rect(), border_radius=BORDER_RADIUS)
+                else:
+                    if logged:
+                        logger.info("End STIMULATION")
+                        logger.info("Start REST")
+                        logged = False
 
                 # Stop the stimulus GUI after the session duration.
-                if time.time() - start_time >= PREPARATION_TIME + STIMULATION_TIME + REST_TIME:
+                if time.time() - start_time >= self._preparation_duration + self._stimulation_duration + self._rest_duration:
+                    logger.info("End REST")
+                    logger.info(f"End {position} session.")
                     break
 
                 # Update the screen
@@ -115,4 +131,4 @@ class BlankboardStimulus:
 
 
 if __name__ == '__main__':
-    BlankboardStimulus(FREQUENCIES_DICT, PREPARATION_TIME, STIMULATION_TIME, REST_TIME).run()
+    BlankboardStimulus(FREQUENCIES_DICT, 1, 1, 1).run()
