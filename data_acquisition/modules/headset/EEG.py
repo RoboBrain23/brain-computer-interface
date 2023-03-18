@@ -28,7 +28,6 @@ class EEG(object):
 
         devices_used = 0
 
-        logger.info("first")
         for device in hid.find_all_hid_devices():
             if device.product_name == 'EEG Signals':
                 devices_used += 1
@@ -40,15 +39,12 @@ class EEG(object):
             os._exit(0)
         sn = self.serial_number
 
-        logger.info("second")
         # EPOC+ in 16-bit Mode.
         k = ['\0'] * 16
         k = [sn[-1], sn[-2], sn[-2], sn[-3], sn[-3], sn[-3], sn[-2], sn[-4], sn[-1], sn[-4], sn[-2], sn[-2], sn[-4],
              sn[-4], sn[-2], sn[-1]]
 
-        logger.info("third")
         self.key = str(''.join(k))
-        logger.info("fourth")
         self.cipher = AES.new(self.key.encode("utf8"), AES.MODE_ECB)
 
     def _data_handler(self, data):
