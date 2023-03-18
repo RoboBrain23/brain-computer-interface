@@ -22,16 +22,16 @@ class Box:
         :return: A tuple containing the left and top positions of the rectangle
         """
         if position == LEFT_POSITION:
-            left = 0
+            left = self._screen_width / 2 - 2.5 * BOX_WIDTH
             top = self._screen_height / 2 - BOX_HEIGHT / 2
         elif position == RIGHT_POSITION:
-            left = self._screen_width - BOX_WIDTH
+            left = self._screen_width / 2 + 1.5 * BOX_WIDTH
             top = self._screen_height / 2 - BOX_HEIGHT / 2
         elif position == TOP_POSITION:
-            top = 0
+            top = self._screen_height / 2 - 2.5 * BOX_HEIGHT
             left = self._screen_width / 2 - BOX_WIDTH / 2
         elif position == DOWN_POSITION:
-            top = self._screen_height - BOX_HEIGHT
+            top = self._screen_height / 2 + 1.5 * BOX_HEIGHT
             left = self._screen_width / 2 - BOX_WIDTH / 2
         elif position == CENTER_POSITION:
             left = self._screen_width / 2 - BOX_WIDTH / 2
