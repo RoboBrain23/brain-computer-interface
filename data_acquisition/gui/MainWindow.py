@@ -5,7 +5,6 @@ from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushB
 
 from data_acquisition.gui.widgets.FlickringModeGroupBox import FlickeringModeGroupBox
 from data_acquisition.gui.widgets.LogoLabel import LogoLabel
-from data_acquisition.modules.utils.stimulus.Stimulus import Stimulus
 
 
 class MainWindow(QWidget):
@@ -83,8 +82,6 @@ class MainWindow(QWidget):
         #                          self.EPOC_DURATION, self.BREAK_DURATION)
         # self.stimulus.run(self.flickeringModeGroup.isTraining())
         pass
-
-
 
 
 if __name__ == '__main__':
