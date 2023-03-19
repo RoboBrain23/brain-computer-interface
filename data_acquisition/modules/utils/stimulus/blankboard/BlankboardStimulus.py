@@ -11,7 +11,7 @@ logger = app_logger  # Log all in app.log
 
 class BlankboardStimulus:
     def __init__(self, frequencies: dict, preparation_duration: int, stimulation_duration: int,
-                 rest_duration: int, is_full_screen: bool = False):
+                 rest_duration: int, is_full_screen: bool, direction_order: list):
         """
 
         :param frequencies: Dictionary of the boxes frequencies in this order (Top, Right, Down, Left)
@@ -24,13 +24,17 @@ class BlankboardStimulus:
 
         :param is_full_screen: Indicator to run stimulus in a full-screen mode
 
+        :param direction_order: List of the direction in order.
+
         """
+
         self._done = False
         self._frequencies = frequencies
         self._preparation_duration = preparation_duration
         self._stimulation_duration = stimulation_duration
         self._rest_duration = rest_duration
         self._is_full_screen = is_full_screen
+        self._direction_order = direction_order
 
         self._screen_width = 1024
         self._screen_height = 780
@@ -58,7 +62,7 @@ class BlankboardStimulus:
     def run(self):
         pygame.init()
 
-        for position in self._frequencies:
+        for position in self._direction_order:
             logged = True
             logger.info(f"Start PREPARATION, {position} is now PURPLE")
             self._boxes[position].toggle_color()
@@ -131,4 +135,4 @@ class BlankboardStimulus:
 
 
 if __name__ == '__main__':
-    BlankboardStimulus(FREQUENCIES_DICT, 1, 1, 1).run()
+    BlankboardStimulus(FREQUENCIES_DICT, 1, 1, 1, True, POSITIONS).run()

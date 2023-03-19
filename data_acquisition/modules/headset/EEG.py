@@ -124,7 +124,7 @@ class EEG(object):
             print(e)
 
     def start_recording(self, csv_data_file: str, csv_meta_data_file: str, preparation_duration: int,
-                        stimulation_duration: int, rest_duration: int, frequencies: dict):
+                        stimulation_duration: int, rest_duration: int, frequencies: dict, direction_order: list):
         """
         Start recording EEG data into .csv file
 
@@ -140,6 +140,8 @@ class EEG(object):
 
         :param frequencies: Dictionary of the direction as a key and a frame as a value which freq=60/frame
 
+        :param direction_order: List of the direction in order.
+
         :type csv_data_file: str
 
         :type csv_meta_data_file: str
@@ -151,6 +153,8 @@ class EEG(object):
         :type rest_duration: int
 
         :type frequencies: dict
+
+        :type direction_order: list
         """
 
         # Open the targeted csv file for the first time to start recording process.
@@ -167,12 +171,12 @@ class EEG(object):
 
         # Append the raw data into CSV file.
         try:
-            for direction, frequency in frequencies.items():
+            for direction in direction_order:
                 if not self._recording_state:
                     break
 
                 current_direction = direction
-                current_frequency = frequency
+                current_frequency = frequencies[direction]
 
                 # Delay the recording process if needed.
                 logger.info(f"Start PREPARATION for {preparation_duration} seconds")
@@ -186,7 +190,6 @@ class EEG(object):
                 meta_data = f"{current_row}, {current_direction}"
                 meta_data_file.write(meta_data + "\n")
 
-                logger.info(f"Clearing tasks Queue before recording")
                 self._clear_tasks()
                 logger.info(f"Is tasks queue empty: {self._is_tasks_empty()}")
 
