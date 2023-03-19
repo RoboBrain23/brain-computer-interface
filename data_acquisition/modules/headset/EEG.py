@@ -36,6 +36,7 @@ class EEG(object):
                 self.serial_number = device.serial_number
                 device.set_raw_data_handler(self._data_handler)
         if devices_used == 0:
+            logger.error("Can't find EPOC+ usb")
             os._exit(0)
         sn = self.serial_number
 
@@ -207,9 +208,10 @@ class EEG(object):
                     raw_data = self.get_data() + ", {}, {}".format(current_direction, current_frequency)
                     raw_data_file.write(raw_data + "\n")
 
-                logger.info(f"Start REST")
-                self._pause_recording(rest_duration)
-                logger.info("End REST")
+                if self._recording_state:
+                    logger.info(f"Start REST")
+                    self._pause_recording(rest_duration)
+                    logger.info("End REST")
 
         except KeyboardInterrupt:
             print("You stop the recording process!")

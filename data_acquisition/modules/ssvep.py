@@ -2,7 +2,7 @@ import asyncio
 import threading
 import time
 
-from data_acquisition.config.config import FREQUENCIES_DICT
+from data_acquisition.config.config import FREQUENCIES_DICT, POSITIONS
 from data_acquisition.modules.headset.EEG import EEG
 from data_acquisition.modules.utils.stimulus.blankboard.BlankboardStimulus import BlankboardStimulus
 # from data_acquisition.modules.utils.stimulus.checkerboard.CheckerboardStimulus import CheckerboardStimulus
@@ -40,7 +40,7 @@ class SSVEP:
         Start recording eeg data and store the data in csv file
         """
 
-        prefix = "Samy"
+        prefix = ""
         base_file_name = time.strftime("%d.%m.%y_%H.%M.%S")
         suffix = "meta_data"
         logger.info("STARTING CREATING csv FILES")
@@ -50,7 +50,8 @@ class SSVEP:
         csv_meta_data_file = create_csv_file(prefix, base_file_name, suffix)
 
         self._epoc.start_recording(csv_data_file_path, csv_meta_data_file, self._preparation_duration,
-                                   self._stimulation_duration, self._rest_duration, self._frequencies, self._direction_order)
+                                   self._stimulation_duration, self._rest_duration, self._frequencies,
+                                   self._direction_order)
 
     def stop_recording(self):
         self._epoc.stop_acquisition()
@@ -80,9 +81,9 @@ class SSVEP:
             self.stop_recording()
             logger.info("Recording Closed!\n")
 
-        except KeyboardInterrupt:
+        except Exception as e:
+            logger.error('Error occurred while recording')
             self.stop_recording()
-            logger.info("Recording Closed!")
 
     def set_session_state(self, state: bool):
         self._session_state = state
@@ -91,12 +92,11 @@ class SSVEP:
         return self._session_state
 
 
-# if __name__ == '__main__':
-#     preparation_duration = 2
-#     stimulation_duration = 4
-#     rest_duration = 4
-#     full_screen = True
-#
-#
-#     ssvep = SSVEP(preparation_duration, stimulation_duration, rest_duration, FREQUENCIES_DICT, full_screen)
-#     ssvep.start()
+if __name__ == '__main__':
+    preparation_duration = 1
+    stimulation_duration = 1
+    rest_duration = 1
+    full_screen = False
+
+    ssvep = SSVEP(preparation_duration, stimulation_duration, rest_duration, FREQUENCIES_DICT, full_screen, POSITIONS)
+    ssvep.start()
