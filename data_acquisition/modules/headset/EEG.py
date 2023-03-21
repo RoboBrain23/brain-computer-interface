@@ -63,6 +63,11 @@ class EEG(object):
     def get_data(self):
 
         data = tasks.get()
+        d = ""
+        for i in data:
+            d += f"{i}, "
+        logger.warning(f"The BCI stream data : {d}")
+
         # print(str(data[0])) #COUNTER
 
         try:
@@ -159,8 +164,8 @@ class EEG(object):
         """
 
         # Open the targeted csv file for the first time to start recording process.
-        data_header = "F3, FC5, AF3, F7, T7, P7, O1, O2, P8, T8, F8, AF4, FC6, F4, label, frequency"
-        meta_data_header = "starting_row, label"
+        data_header = "AF3,F7,F3,FC5,T7,P7,O1,O2,P8,T8,FC6,F4,F8,AF4"
+        meta_data_header = "starting_row,label"
 
         raw_data_file = self._open_file(csv_data_file, data_header)
         meta_data_file = self._open_file(csv_meta_data_file, meta_data_header)
@@ -205,7 +210,7 @@ class EEG(object):
                         continue
 
                     current_row += 1
-                    raw_data = self.get_data() + ", {}, {}".format(current_direction, current_frequency)
+                    raw_data = self.get_data()
                     raw_data_file.write(raw_data + "\n")
 
                 if self._recording_state:
