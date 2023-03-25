@@ -73,7 +73,7 @@ class SSVEP:
         try:
             self._epoc = EEG()
             # Create a thread for recording data and start the GUI in the main thread.
-            asyncio_thread = threading.Thread(target=asyncio.run, args=(self.start_recording(),))
+            asyncio_thread = threading.Thread(name="EEG_thread", target=asyncio.run, args=(self.start_recording(),))
             asyncio_thread.start()
 
             self.start_stimulation_gui()
