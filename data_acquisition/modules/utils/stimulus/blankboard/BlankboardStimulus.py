@@ -11,7 +11,7 @@ logger = app_logger  # Log all in app.log
 
 class BlankboardStimulus:
     def __init__(self, frequencies: dict, preparation_duration: int, stimulation_duration: int,
-                 rest_duration: int, is_full_screen: bool, direction_order: list):
+                 rest_duration: int, is_full_screen: bool, directions_order: list):
         """
 
         :param frequencies: Dictionary of the boxes frequencies in this order (Top, Right, Down, Left)
@@ -24,7 +24,7 @@ class BlankboardStimulus:
 
         :param is_full_screen: Indicator to run stimulus in a full-screen mode
 
-        :param direction_order: List of the direction in order.
+        :param directions_order: List of the direction in order.
 
         """
 
@@ -34,7 +34,7 @@ class BlankboardStimulus:
         self._stimulation_duration = stimulation_duration
         self._rest_duration = rest_duration
         self._is_full_screen = is_full_screen
-        self._direction_order = direction_order
+        self._directions_order = directions_order
 
         self._screen_width = 1024
         self._screen_height = 780
@@ -62,66 +62,67 @@ class BlankboardStimulus:
     def run(self):
         pygame.init()
 
-        for position in self._direction_order:
-            logged = True
-            logger.info(f"Start PREPARATION, {position} is now PURPLE")
-            self._boxes[position].toggle_color()
+        for directions in self._directions_order:
+            for position in directions:
+                logged = True
+                logger.info(f"Start PREPARATION, {position} is now PURPLE")
+                self._boxes[position].toggle_color()
 
-            # Set the initial time
-            start_time = time.time()
+                # Set the initial time
+                start_time = time.time()
 
-            # Main loop
-            while not self._done:
+                # Main loop
+                while not self._done:
 
-                # Get the current time
-                current_time = time.time()
+                    # Get the current time
+                    current_time = time.time()
 
-                # Calculate the time elapsed since the last frame
-                delta_time = current_time - start_time
+                    # Calculate the time elapsed since the last frame
+                    delta_time = current_time - start_time
 
-                # Clear the screen
-                self._screen.fill(BLACK)
+                    # Clear the screen
+                    self._screen.fill(BLACK)
 
-                # # Displaying box info on the window for testing purpose.
-                # self._display_info()
+                    # # Displaying box info on the window for testing purpose.
+                    # self._display_info()
 
-                # Toggle the box color after the preparation time.
-                if time.time() - start_time >= self._preparation_duration and self._boxes[position].get_color() == PURPLE:
-                    logger.info(f"End PREPARATION, {position} is now BLUE")
-                    logger.info("Start STIMULATION")
-                    self._boxes[position].toggle_color()
+                    # Toggle the box color after the preparation time.
+                    if time.time() - start_time >= self._preparation_duration and self._boxes[position].get_color() == PURPLE:
+                        logger.info(f"End PREPARATION, {position} is now BLUE")
+                        logger.info("Start STIMULATION")
+                        self._boxes[position].toggle_color()
 
-                # Displaying boxes until the stimulation time is ended.
-                if time.time() - start_time < self._preparation_duration + self._stimulation_duration:
+                    # Displaying boxes until the stimulation time is ended.
+                    if time.time() - start_time < self._preparation_duration + self._stimulation_duration:
 
-                    # Draw the box if the elapsed time is less than half the period
-                    for box in self._boxes.values():
-                        curr_frequency = box.get_frequency()
-                        curr_color = box.get_color()
+                        # Draw the box if the elapsed time is less than half the period
+                        for box in self._boxes.values():
+                            curr_frequency = box.get_frequency()
+                            curr_color = box.get_color()
 
-                        if delta_time % (1 / curr_frequency) < 1 / (2 * curr_frequency):
-                            pygame.draw.rect(self._screen, curr_color, box.rect(), border_radius=BORDER_RADIUS)
-                else:
-                    if logged:
-                        logger.info("End STIMULATION")
-                        logger.info("Start REST")
-                        logged = False
+                            if delta_time % (1 / curr_frequency) < 1 / (2 * curr_frequency):
+                                pygame.draw.rect(self._screen, curr_color, box.rect(), border_radius=BORDER_RADIUS)
+                    else:
+                        if logged:
+                            logger.info("End STIMULATION")
+                            logger.info("Start REST")
+                            logged = False
 
-                # Stop the stimulus GUI after the session duration.
-                if time.time() - start_time >= self._preparation_duration + self._stimulation_duration + self._rest_duration:
-                    logger.info("End REST")
-                    logger.info(f"End {position} session.")
-                    break
+                    # Stop the stimulus GUI after the session duration.
+                    if time.time() - start_time >= self._preparation_duration + self._stimulation_duration + self._rest_duration:
+                        logger.info("End REST")
+                        logger.info(f"End {position} session.")
+                        break
 
-                # Update the screen
-                pygame.display.flip()
+                    # Update the screen
+                    pygame.display.flip()
 
-                for event in pygame.event.get():
-                    if (event.type == pygame.KEYUP) or (event.type == pygame.KEYDOWN):
-                        if event.key == pygame.K_ESCAPE:
+                    for event in pygame.event.get():
+                        if (event.type == pygame.KEYUP) or (event.type == pygame.KEYDOWN):
+                            if event.key == pygame.K_ESCAPE:
+                                self._done = True
+                        if event.type == pygame.QUIT:
                             self._done = True
-                    if event.type == pygame.QUIT:
-                        self._done = True
         pygame.quit()
 
     def close_stimulation(self):

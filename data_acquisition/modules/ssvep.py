@@ -1,8 +1,10 @@
 import asyncio
+import random
 import threading
 import time
 
-from data_acquisition.config.config import FREQUENCIES_DICT, POSITIONS
+from data_acquisition.config.config import FREQUENCIES_DICT, POSITIONS, TOP_POSITION, RIGHT_POSITION, DOWN_POSITION, \
+    LEFT_POSITION
 from data_acquisition.modules.headset.EEG import EEG
 from data_acquisition.modules.utils.stimulus.blankboard.BlankboardStimulus import BlankboardStimulus
 # from data_acquisition.modules.utils.stimulus.checkerboard.CheckerboardStimulus import CheckerboardStimulus
@@ -93,10 +95,17 @@ class SSVEP:
 
 
 if __name__ == '__main__':
+    no_of_sessions = 5
     preparation_duration = 1
     stimulation_duration = 1
     rest_duration = 1
     full_screen = False
 
-    ssvep = SSVEP(preparation_duration, stimulation_duration, rest_duration, FREQUENCIES_DICT, full_screen, POSITIONS)
+    base_directions = [TOP_POSITION, RIGHT_POSITION, DOWN_POSITION, LEFT_POSITION]
+    final_order = []
+    for i in range(no_of_sessions):
+        random.shuffle(base_directions)
+        final_order.append(list(base_directions))
+
+    ssvep = SSVEP(preparation_duration, stimulation_duration, rest_duration, FREQUENCIES_DICT, full_screen, final_order)
     ssvep.start()

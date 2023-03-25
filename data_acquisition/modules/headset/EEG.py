@@ -136,7 +136,7 @@ class EEG(object):
             print(e)
 
     def start_recording(self, csv_data_file: str, csv_meta_data_file: str, preparation_duration: int,
-                        stimulation_duration: int, rest_duration: int, frequencies: dict, direction_order: list):
+                        stimulation_duration: int, rest_duration: int, frequencies: dict, directions_order: list):
         """
         Start recording EEG data into .csv file
 
@@ -152,7 +152,7 @@ class EEG(object):
 
         :param frequencies: Dictionary of the direction as a key and a frame as a value which freq=60/frame
 
-        :param direction_order: List of the direction in order.
+        :param directions_order: List of the direction in order.
 
         :type csv_data_file: str
 
@@ -166,7 +166,7 @@ class EEG(object):
 
         :type frequencies: dict
 
-        :type direction_order: list
+        :type directions_order: list
         """
 
         # Open the targeted csv file for the first time to start recording process.
@@ -183,46 +183,47 @@ class EEG(object):
 
         # Append the raw data into CSV file.
         try:
-            for direction in direction_order:
-                if not self._recording_state:
-                    break
-
-                current_direction = direction
-                current_frequency = frequencies[direction]
-
-                # Delay the recording process if needed.
-                logger.info(f"Start PREPARATION for {preparation_duration} seconds")
-                self._pause_recording(preparation_duration)
-                logger.info("End PREPARATION")
-
-                logger.info(f"Recording stage started with direction {current_direction} and {current_frequency} HZ")
-                starting_time = time.time()
-                self._recording_state = True
-
-                meta_data = f"{current_row}, {current_direction}"
-                meta_data_file.write(meta_data + "\n")
-
-                self._clear_tasks()
-                logger.info(f"Is tasks queue empty: {self._is_tasks_empty()}")
-
-                logger.info(f"start STIMULATION RECORDING")
-                while self._recording_state:
-
-                    if time.time() - starting_time >= stimulation_duration:
-                        logger.info(f"End STIMULATION RECORDING")
+            for directions in directions_order:
+                for direction in directions:
+                    if not self._recording_state:
                         break
 
-                    if self._is_tasks_empty():
-                        continue
+                    current_direction = direction
+                    current_frequency = frequencies[direction]
 
-                    current_row += 1
-                    raw_data = self.get_data()
-                    raw_data_file.write(raw_data + "\n")
+                    # Delay the recording process if needed.
+                    logger.info(f"Start PREPARATION for {preparation_duration} seconds")
+                    self._pause_recording(preparation_duration)
+                    logger.info("End PREPARATION")
 
-                if self._recording_state:
-                    logger.info(f"Start REST")
-                    self._pause_recording(rest_duration)
-                    logger.info("End REST")
+                    logger.info(f"Recording stage started with direction {current_direction} and {current_frequency} HZ")
+                    starting_time = time.time()
+                    self._recording_state = True
+
+                    meta_data = f"{current_row}, {current_direction}"
+                    meta_data_file.write(meta_data + "\n")
+
+                    self._clear_tasks()
+                    logger.info(f"Is tasks queue empty: {self._is_tasks_empty()}")
+
+                    logger.info(f"start STIMULATION RECORDING")
+                    while self._recording_state:
+
+                        if time.time() - starting_time >= stimulation_duration:
+                            logger.info(f"End STIMULATION RECORDING")
+                            break
+
+                        if self._is_tasks_empty():
+                            continue
+
+                        current_row += 1
+                        raw_data = self.get_data()
+                        raw_data_file.write(raw_data + "\n")
+
+                    if self._recording_state:
+                        logger.info(f"Start REST")
+                        self._pause_recording(rest_duration)
+                        logger.info("End REST")
 
         except KeyboardInterrupt:
             print("You stop the recording process!")
