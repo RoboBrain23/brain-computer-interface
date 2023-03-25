@@ -17,9 +17,10 @@ logger = app_logger  # Log all in app.log
 
 
 class SSVEP:
-    def __init__(self, preparation_duration: int, stimulation_duration: int, rest_duration: int, frequencies: dict,
+    def __init__(self, subject_name: str, preparation_duration: int, stimulation_duration: int, rest_duration: int, frequencies: dict,
                  full_screen_mode: bool, order: list):
 
+        self._subject_name = subject_name
         self._preparation_duration = preparation_duration
         self._stimulation_duration = stimulation_duration
         self._rest_duration = rest_duration
@@ -42,7 +43,7 @@ class SSVEP:
         Start recording eeg data and store the data in csv file
         """
 
-        prefix = ""
+        prefix = self._subject_name
         base_file_name = time.strftime("%d.%m.%y_%H.%M.%S")
         suffix = "meta_data"
         logger.info("STARTING CREATING csv FILES")
@@ -95,6 +96,7 @@ class SSVEP:
 
 
 if __name__ == '__main__':
+    subject_name = ""
     no_of_sessions = 5
     preparation_duration = 1
     stimulation_duration = 1
@@ -107,5 +109,5 @@ if __name__ == '__main__':
         random.shuffle(base_directions)
         final_order.append(list(base_directions))
 
-    ssvep = SSVEP(preparation_duration, stimulation_duration, rest_duration, FREQUENCIES_DICT, full_screen, final_order)
+    ssvep = SSVEP(subject_name, preparation_duration, stimulation_duration, rest_duration, FREQUENCIES_DICT, full_screen, final_order)
     ssvep.start()
