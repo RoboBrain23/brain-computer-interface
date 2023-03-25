@@ -25,6 +25,9 @@ class EEG(object):
         self._recording_state = False
         self.hid = None
         self.delimiter = ", "
+        self.key = ""
+        self.cipher = None
+
 
         devices_used = 0
 
@@ -34,19 +37,22 @@ class EEG(object):
                 self.hid = device
                 self.hid.open()
                 self.serial_number = device.serial_number
+                # EPOC+ in 16-bit Mode.
+                k = ['\0'] * 16
+                k = [self.serial_number[-1], self.serial_number[-2], self.serial_number[-2], self.serial_number[-3],
+                     self.serial_number[-3], self.serial_number[-3], self.serial_number[-2], self.serial_number[-4],
+                     self.serial_number[-1], self.serial_number[-4], self.serial_number[-2], self.serial_number[-2],
+                     self.serial_number[-4], self.serial_number[-4], self.serial_number[-2], self.serial_number[-1]]
+
+                self.key = str(''.join(k))
+                self.cipher = AES.new(self.key.encode("utf8"), AES.MODE_ECB)
                 device.set_raw_data_handler(self._data_handler)
         if devices_used == 0:
             logger.error("Can't find EPOC+ usb")
             os._exit(0)
-        sn = self.serial_number
+        # sn = self.serial_number
 
-        # EPOC+ in 16-bit Mode.
-        k = ['\0'] * 16
-        k = [sn[-1], sn[-2], sn[-2], sn[-3], sn[-3], sn[-3], sn[-2], sn[-4], sn[-1], sn[-4], sn[-2], sn[-2], sn[-4],
-             sn[-4], sn[-2], sn[-1]]
 
-        self.key = str(''.join(k))
-        self.cipher = AES.new(self.key.encode("utf8"), AES.MODE_ECB)
 
     def _data_handler(self, data):
         join_data = ''.join(map(chr, data[1:]))
