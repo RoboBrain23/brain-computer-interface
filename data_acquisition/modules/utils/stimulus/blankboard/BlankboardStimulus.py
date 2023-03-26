@@ -136,4 +136,4 @@ class BlankboardStimulus:
 
 
 if __name__ == '__main__':
-    BlankboardStimulus(FREQUENCIES_DICT, 1, 1, 1, True, POSITIONS).run()
+    BlankboardStimulus(FREQUENCIES_DICT, 1, 1, 1, True, [POSITIONS]).run()
