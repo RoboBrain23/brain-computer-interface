@@ -3,6 +3,8 @@ import sys
 import time
 import queue
 
+from data_acquisition.modules.utils.FileHandler import create_csv_file
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 packages_path = os.path.join(dir_path, "cyKit")
 sys.path.append(packages_path)
@@ -69,10 +71,10 @@ class EEG(object):
     def get_data(self):
 
         data = tasks.get()
-        d = ""
-        for i in data:
-            d += f"{i}, "
-        logger.warning(f"The BCI stream data : {d}")
+        # d = ""
+        # for i in data:
+        #     d += f"{i}, "
+        # logger.warning(f"The BCI stream data : {d}")
 
         # print(str(data[0])) #COUNTER
 
@@ -177,7 +179,7 @@ class EEG(object):
         meta_data_file = self._open_file(csv_meta_data_file, meta_data_header)
 
         starting_time = 0
-        current_row = 1
+        current_row = 0
 
         self._recording_state = True
 
