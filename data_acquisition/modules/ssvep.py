@@ -17,7 +17,8 @@ logger = app_logger  # Log all in app.log
 
 
 class SSVEP:
-    def __init__(self, subject_name: str, preparation_duration: int, stimulation_duration: int, rest_duration: int, frequencies: dict,
+    def __init__(self, subject_name: str, preparation_duration: int, stimulation_duration: int, rest_duration: int,
+                 frequencies: dict,
                  full_screen_mode: bool, order: list):
 
         self._subject_name = subject_name
@@ -63,9 +64,9 @@ class SSVEP:
         """
         Start the stimulation GUI
         """
-        self._stimulus = BlankboardStimulus(self._frequencies, self._preparation_duration, self._stimulation_duration,
-                                            self._rest_duration, self._full_screen_mode, self._direction_order)
-        self._stimulus.run()
+        self._stimulus = BlankboardStimulus()
+        self._stimulus.run(self._frequencies, self._preparation_duration, self._stimulation_duration,
+                           self._rest_duration, self._full_screen_mode, self._direction_order)
 
         # self._stimulus = CheckerboardStimulus(self._stimulus_full_screen_mode, self._stimulus_screen_width,
         #                                       self._stimulus_screen_height, self._frequencies,
@@ -109,5 +110,6 @@ if __name__ == '__main__':
         random.shuffle(base_directions)
         final_order.append(list(base_directions))
 
-    ssvep = SSVEP(subject_name, preparation_duration, stimulation_duration, rest_duration, FREQUENCIES_DICT, full_screen, final_order)
+    ssvep = SSVEP(subject_name, preparation_duration, stimulation_duration, rest_duration, FREQUENCIES_DICT,
+                  full_screen, final_order)
     ssvep.start()
