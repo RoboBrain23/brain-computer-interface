@@ -4,12 +4,18 @@ import sys
 from online_processing.utils.data_streamer import get_epoc, empty_buffer
 from online_processing.utils.stimulus import start_stimulus
 
+from data_acquisition.modules.utils.Logger import Logger, app_logger
+
+# logger = Logger(__name__)
+logger = app_logger  # Log all in app.log
 
 def data_streamer(q, w, fs, terminate_flag):
     empty_buffer()
     while not terminate_flag.value:
         data = get_epoc(w, fs)
+        logger.info("Date is received")
         q.put(data)
+        logger.info("Date is added to the Queue")
 
 
 def stimulus(terminate_flag):
@@ -20,7 +26,9 @@ def stimulus(terminate_flag):
 def model(q, terminate_flag):
     while not terminate_flag.value:
         if not q.empty():
+            logger.info("Data found in the Queue")
             data = q.get()
+            logger.info("Date is get from the Queue")
             # TODO: Implement your model code here.
             print(f"Got data: {data}")
 
@@ -34,10 +42,10 @@ if __name__ == '__main__':
 
     try:
         # creating processes
-        p1 = multiprocessing.Process(name="stimulus", target=stimulus, args=(terminate_flag,))
-        p2 = multiprocessing.Process(name="data_streamer", target=data_streamer,
+        p1 = multiprocessing.Process(name="StimulusProcess", target=stimulus, args=(terminate_flag,))
+        p2 = multiprocessing.Process(name="DataStreamerProcess", target=data_streamer,
                                      args=(data_queue, window_size, sampling_frequency, terminate_flag,))
-        p3 = multiprocessing.Process(name="model", target=model, args=(data_queue, terminate_flag,))
+        p3 = multiprocessing.Process(name="ModelProcess", target=model, args=(data_queue, terminate_flag,))
 
         p1.start()
         p2.start()
