@@ -195,7 +195,8 @@ class EEG(object):
                     self._pause_recording(preparation_duration)
                     logger.info("End PREPARATION")
 
-                    logger.info(f"Recording stage started with direction {current_direction} and {current_frequency} HZ")
+                    logger.info(
+                        f"Recording stage started with direction {current_direction} and {current_frequency} HZ")
                     starting_time = time.time()
                     self._recording_state = True
 
@@ -233,15 +234,18 @@ class EEG(object):
                 "The recording session is done after {} seconds and saved at :".format(time.time() - starting_time))
             logger.info("File Path>> " + csv_data_file)
 
-    def epoc_streamer(self, w: int, fs: int):
+    def epoc_streamer(self, w: float, fs: int):
+        logger.info("START Streaming process")
         epoc = []
         num_of_rows = int(w * fs)
 
-        for i in range(num_of_rows):
+        for _ in range(num_of_rows):
             data_row = self.get_data()
-            epoc.append(data_row)
+            epoc.append([data_row])
 
+        logger.info("FINISH Streaming process")
         return epoc
+
 
 if __name__ == '__main__':
     headset = EEG()
