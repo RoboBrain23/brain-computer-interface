@@ -19,7 +19,7 @@ def Logger(name):
     stdout_handler = logging.StreamHandler()  # This for stdout logging
     file_handler = logging.FileHandler(f"{logs_path}/{name}.log", mode='a')  # This for file logging
     formatter = logging.Formatter(
-        "%(asctime)s - %(levelname)s - %(filename)s:%(lineno)2d - %(message)s | %(threadName)s:%(thread)d")
+        "%(asctime)s - %(levelname)s - %(filename)s:%(lineno)2d - %(message)s | %(processName)s: %(process)d | %(threadName)s:%(thread)d")
 
     # add formatter to handler
     stdout_handler.setFormatter(formatter)
