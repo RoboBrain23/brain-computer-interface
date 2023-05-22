@@ -1,5 +1,5 @@
 from keras.layers import (BatchNormalization, Conv2D, Dense, Dropout, Flatten,
-                          Input, LSTM, Reshape, PReLU, Bidirectional)
+                          LSTM, Reshape, PReLU, Bidirectional)
 from keras.models import Model
 from keras.constraints import max_norm
 from tensorflow_addons.layers import SpectralNormalization
@@ -117,7 +117,7 @@ class SSVEPNET(NNBase):
         x = Flatten()(x)
         return x
 
-    def build_model(self, input_shape):
+    def model(self, inputs):
         """
         Build the SSVEPNet model
 
@@ -126,10 +126,8 @@ class SSVEPNET(NNBase):
         :return: the model of SSVEPNet
         """
         F = [self.channel * 2] + [self.channel * 4]
-        T = input_shape[1]
         K = 10
         S = 2
-        inputs = Input(shape=(self.channel, T, 1))
         net = self.spatial_block(inputs, self.channel, self.drop_out)
         net = self.enhanced_block(net, F[1], self.drop_out, K, S)
         conv_layers = net
