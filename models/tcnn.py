@@ -1,15 +1,18 @@
 from keras.regularizers import l2
 from keras.layers import Conv2D, BatchNormalization, Dense, Activation, Dropout, Flatten
+from nn_base import NNBase
 
 
-class TCNN:
+class TCNN(NNBase):
     # Setting hyper-parameters
-    def __init__(self, regularization_rate=0.001, drop_out=0.4, activation='elu', num_classes=4):
+    def __init__(self, regularization_rate=0.001, drop_out=0.4, activation='elu',
+                 fs=128, channels=2, num_classes=4):
+        super().__init__(fs=fs, channels=channels, num_classes=num_classes)
         self.L = l2(regularization_rate)
         self.drop_out = drop_out
         self.out_channel = 16
         self.activation = activation
-        self.num_classes = num_classes
+        self.set_model_name('TCNN')
 
     # the network of the tCNN
     def model(self, inputs):
@@ -32,7 +35,8 @@ class TCNN:
         third = Activation(self.activation)(third)
         third = Dropout(self.drop_out)(third)
         # the fourth convolution layer
-        fourth = Conv2D(32, kernel_size=(1, third.shape[2]), strides=1, padding='valid', kernel_regularizer=self.L)(third)
+        fourth = Conv2D(32, kernel_size=(1, third.shape[2]), strides=1, padding='valid', kernel_regularizer=self.L)(
+            third)
         fourth = BatchNormalization()(fourth)
         fourth = Activation(self.activation)(fourth)
         # flatten used to reduce the dimension of the features

@@ -3,14 +3,16 @@ from keras.layers import (BatchNormalization, Conv2D, Dense, Dropout, Flatten,
 from keras.models import Model
 from keras.constraints import max_norm
 from tensorflow_addons.layers import SpectralNormalization
+from nn_base import NNBase
 
 
-class SSVEPNET:
+class SSVEPNET(NNBase):
     # Setting hyper-parameters
-    def __init__(self,  drop_out=0.4, num_classes=4, channel=2):
+    def __init__(self, drop_out=0.4, fs=128, channels=2, num_classes=4):
+        super().__init__(fs=fs, channels=channels, num_classes=num_classes)
         self.num_classes = num_classes
         self.drop_out = drop_out
-        self.channel = channel
+        self.set_model_name('SSVEPNET')
 
     def calculateOutSize(self, model):
         """
