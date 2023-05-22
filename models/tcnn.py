@@ -32,7 +32,7 @@ class TCNN:
         third = Activation(self.activation)(third)
         third = Dropout(self.drop_out)(third)
         # the fourth convolution layer
-        fourth = Conv2D(32, kernel_size=(1, x.shape[2]), strides=1, padding='valid', kernel_regularizer=self.L)(third)
+        fourth = Conv2D(32, kernel_size=(1, third.shape[2]), strides=1, padding='valid', kernel_regularizer=self.L)(third)
         fourth = BatchNormalization()(fourth)
         fourth = Activation(self.activation)(fourth)
         # flatten used to reduce the dimension of the features
