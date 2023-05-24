@@ -8,6 +8,15 @@ from keras.models import Model, load_model
 
 class NNBase:
     def __init__(self, fs=128, channels=2, num_classes=4):
+        """
+        NN is the base class of all the neural networks used in this project
+
+        :param fs: the sampling frequency of the EEG data
+
+        :param channels: the number of the channels of the EEG data
+
+        :param num_classes: the number of the classes
+        """
         self.num_classes = num_classes
         self.window_time = 1
         self.model_name = 'model'
@@ -16,9 +25,33 @@ class NNBase:
         self.channels = channels
 
     def model(self, inputs):
+        """
+        the model of the neural network
+
+        :param inputs: the input of the neural network
+        """
         pass
 
     def __train_data_generator(self, batch_size, train_data, win_train, y_label, start_time, train_list, channel):
+        """
+        the generator of the training data
+
+        :param batch_size:  the size of the batch
+
+        :param train_data:  the training data
+
+        :param win_train:  the length of the training data
+
+        :param y_label:  the label of the training data
+
+        :param start_time:  the start time of the training data
+
+        :param train_list:  the list of the training data
+
+        :param channel:  the number of the channels
+
+        :return:  the training data and the label of the training data
+        """
         while True:
             x_train = np.zeros((batch_size, self.channel, win_train, 1), dtype=np.float32)
             y_train = np.zeros((batch_size, self.num_classes), dtype=np.float32)
@@ -42,6 +75,23 @@ class NNBase:
             yield x_train, y_train
 
     def __test_data_generator(self, batch_size, train_data, win_train, y_label, start_time, channel):
+        """
+        the generator of the testing data
+
+        :param batch_size:  the size of the batch
+
+        :param train_data:  the training data
+
+        :param win_train:  the length of the training data
+
+        :param y_label:  the label of the training data
+
+        :param start_time:  the start time of the training data
+
+        :param channel:  the number of the channels
+
+        :return:  the training data and the label of the training data
+        """
         x_train = np.zeros((batch_size, self.channel, win_train, 1), dtype=np.float32)
         y_train = np.zeros((batch_size, self.num_classes), dtype=np.float32)
         # get training samples of batch_size trials
@@ -64,6 +114,11 @@ class NNBase:
         return x_train, y_train
 
     def __train_val_split(self, y_label):
+        """
+        split the training data into training set and validation set
+        :param y_label:  the label of the training data
+        :return:  the index of the training set and validation set
+        """
         train_list = np.arange(y_label.shape[0])
         val_list = np.random.choice(train_list, size=y_label.shape[0] // 10, replace=False)
         train_list = np.delete(train_list, val_list)
@@ -75,6 +130,50 @@ class NNBase:
               tensorboard=False, tensorboard_write_graph=True, tensorboard_histogram_freq=1,
               reducelr_patience=20, reducelr_factor=0.7, reducelr_min_lr=0.0001, reducelr_verbose=1,
               fs=128, save_path='model'):
+        """
+        train the model
+
+        :param train_data: the training data
+
+        :param y_label: the label of the training data
+
+        :param start_time: the start time of the time-window
+
+        :param batch_size: the number of the training samples in each batch
+
+        :param epochs: the number of the training epochs
+
+        :param reduce_lr: whether to use the ReduceLROnPlateau callback or not
+
+        :param check_point: whether to use the ModelCheckpoint callback or not
+
+        :param check_point_mode: the mode of the ModelCheckpoint callback
+
+        :param csv_logger: whether to use the CSVLogger callback or not
+
+        :param tensorboard: whether to use the TensorBoard callback or not
+
+        :param tensorboard_write_graph: whether to write the graph of the model in the TensorBoard callback or not
+
+        :param tensorboard_histogram_freq: the frequency of the histogram in the TensorBoard callback
+
+        :param reducelr_patience: the patience of the ReduceLROnPlateau callback
+
+        :param reducelr_factor: the factor of the ReduceLROnPlateau callback
+
+        :param reducelr_min_lr: the minimum learning rate of the ReduceLROnPlateau callback
+
+        :param reducelr_verbose: the verbose of the ReduceLROnPlateau callback
+
+        :param fs: the sampling frequency of the EEG data
+
+        :param save: whether to save the model or not
+
+        :param save_mode: the mode of the saving model
+
+        :param save_path: the path of the saving model
+        """
+
         win_trian = int(self.window_time * self.fs)
         train_list, val_list = self.__train_val_split(y_label)
         train_generator = self.__train_data_generator(batch_size, train_data, win_trian, y_label, start_time,
@@ -87,11 +186,13 @@ class NNBase:
         # model.summary()
         # model_name = 'tCnn_model_'+str(t_train)+'s.h5'
         model_name = save_path + '_tCNN_' + str(self.window_time) + 's.{epoch:02d}-{val_accuracy:.4f}.h5'
-        adam = Adam(learning_rate=0.01, beta_1=0.9, beta_2=0.999, epsilon=1e-07)
+        adam = Adam(learning_rate=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-07)
         callbacks = self.set_callbacks(check_point=check_point, check_point_mode=check_point_mode,
-                                       check_point_path=model_name, csv_logger=csv_logger, tensorboard=tensorboard,
+                                       check_point_path=model_name, csv_logger=csv_logger,
+                                       tensorboard=tensorboard,
                                        tensorboard_write_graph=tensorboard_write_graph,
                                        tensorboard_histogram_freq=tensorboard_histogram_freq,
+                                       reduce_lr=reduce_lr,
                                        reducelr_patience=reducelr_patience, reducelr_factor=reducelr_factor,
                                        reducelr_min_lr=reducelr_min_lr,
                                        reducelr_verbose=reducelr_verbose)
@@ -107,6 +208,23 @@ class NNBase:
         )
 
     def test(self, test_data, y_label, start_time, batch_size=32, fs=128, model_path='model'):
+        """
+        test the model with the test data and return the accuracy
+
+        :param test_data: the test data
+
+        :param y_label: the label of the test data
+
+        :param start_time: the start time of the test data
+
+        :param model_path: the path of the model
+
+        :param batch_size: the batch size of the test data
+
+        :param fs: the sampling frequency
+
+        :return: the accuracy of the test data
+        """
         win_train = int(self.window_time * fs)
         if model_path == 'model':
             model_name = model_path + '_tCNN_' + str(self.window_time) + 's.{epoch:02d}-{val_accuracy:.4f}.h5'
@@ -142,6 +260,33 @@ class NNBase:
     def set_callbacks(self, check_point=True, check_point_mode='min', check_point_path='', csv_logger=True,
                       tensorboard=True, tensorboard_write_graph=True, tensorboard_histogram_freq=1, reduce_lr=True,
                       reducelr_patience=20, reducelr_factor=0.7, reducelr_min_lr=0.0001, reducelr_verbose=1):
+        """
+        set the callbacks of the model
+
+        :param check_point: whether to use the ModelCheckpoint callback
+
+        :param check_point_mode: the mode of the ModelCheckpoint callback
+
+        :param check_point_path: the path of the ModelCheckpoint callback
+
+        :param csv_logger: whether to use the CSVLogger callback
+
+        :param tensorboard: whether to use the TensorBoard callback
+
+        :param tensorboard_write_graph: whether to write the graph of the TensorBoard callback
+
+        :param tensorboard_histogram_freq: the frequency of the TensorBoard callback
+
+        :param reduce_lr: whether to use the ReduceLROnPlateau callback
+
+        :param reducelr_patience: the patience of the ReduceLROnPlateau callback
+
+        :param reducelr_factor: the factor of the ReduceLROnPlateau callback
+
+        :param reducelr_min_lr: the min_lr of the ReduceLROnPlateau callback
+
+        :param reducelr_verbose: the verbose of the ReduceLROnPlateau callback
+        """
         callbacks = []
         if reduce_lr:
             reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=reducelr_factor,
@@ -162,15 +307,35 @@ class NNBase:
         return callbacks
 
     def set_input_shape(self, input_shape):
+        """
+        set the input shape of the model
+
+        :param input_shape: the input shape of the model
+        """
         self.input_shape = input_shape
 
     def set_model_name(self, model_name):
+        """
+        set the name of the model
+
+        :param model_name: the name of the model
+        """
         self.model_name = model_name
 
     def set_window_time(self, window_time):
+        """
+        set the window time that used in training
+
+        :param window_time: the window time that used in training
+        """
         self.window_time = window_time
         self.input_shape = (self.channels, int(self.window_time * self.fs), 1)
 
     def set_fs(self, fs):
+        """
+        set the sampling frequency of the data
+
+        :param fs: the sampling frequency of the data
+        """
         self.fs = fs
         self.input_shape = (self.channels, int(self.window_time * self.fs), 1)
