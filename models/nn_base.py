@@ -4,6 +4,7 @@ from keras.callbacks import ReduceLROnPlateau, CSVLogger, TensorBoard, ModelChec
 from keras.optimizers import Adam
 from keras.layers import Input
 from keras.models import Model, load_model
+import os
 
 
 class NNBase:
@@ -53,7 +54,7 @@ class NNBase:
         :return:  the training data and the label of the training data
         """
         while True:
-            x_train = np.zeros((batch_size, self.channel, win_train, 1), dtype=np.float32)
+            x_train = np.zeros((batch_size, self.channels, win_train, 1), dtype=np.float32)
             y_train = np.zeros((batch_size, self.num_classes), dtype=np.float32)
             # get training samples of batch_size trials
             for i in range(batch_size):
@@ -69,7 +70,7 @@ class NNBase:
                 x_train_data = train_data[x1:x2, :]
                 # todo: add preprocessing functions here
 
-                x_train[i] = np.reshape(x_train_data, (self.channel, win_train, 1))
+                x_train[i] = np.reshape(x_train_data, (self.channels, win_train, 1))
                 y_train[i] = to_categorical(y_data, self.num_classes)
             # print(x_train.shape)
             yield x_train, y_train
@@ -92,7 +93,7 @@ class NNBase:
 
         :return:  the training data and the label of the training data
         """
-        x_train = np.zeros((batch_size, self.channel, win_train, 1), dtype=np.float32)
+        x_train = np.zeros((batch_size, self.channels, win_train, 1), dtype=np.float32)
         y_train = np.zeros((batch_size, self.num_classes), dtype=np.float32)
         # get training samples of batch_size trials
         for i in range(batch_size):
@@ -108,7 +109,7 @@ class NNBase:
             x_train_data = train_data[x1:x2, :]
             # todo: add preprocessing functions here
 
-            x_train[i] = np.reshape(x_train_data, (self.channel, win_train, 1))
+            x_train[i] = np.reshape(x_train_data, (self.channels, win_train, 1))
             y_train[i] = to_categorical(y_data, self.num_classes)
 
         return x_train, y_train
@@ -116,7 +117,9 @@ class NNBase:
     def __train_val_split(self, y_label):
         """
         split the training data into training set and validation set
+
         :param y_label:  the label of the training data
+
         :return:  the index of the training set and validation set
         """
         train_list = np.arange(y_label.shape[0])
@@ -129,7 +132,7 @@ class NNBase:
               check_point=False, check_point_mode='min', csv_logger=False,
               tensorboard=False, tensorboard_write_graph=True, tensorboard_histogram_freq=1,
               reducelr_patience=20, reducelr_factor=0.7, reducelr_min_lr=0.0001, reducelr_verbose=1,
-              fs=128, save_path='model'):
+              fs=128, save=False, save_path=''):
         """
         train the model
 
@@ -174,6 +177,9 @@ class NNBase:
         :param save_path: the path of the saving model
         """
 
+        if not os.path.exists(save_path) and save_path != '':
+            os.makedirs(save_path)
+
         win_trian = int(self.window_time * self.fs)
         train_list, val_list = self.__train_val_split(y_label)
         train_generator = self.__train_data_generator(batch_size, train_data, win_trian, y_label, start_time,
@@ -184,8 +190,8 @@ class NNBase:
         preds = self.model(input_tensor)
         model = Model(input_tensor, preds)
         # model.summary()
-        # model_name = 'tCnn_model_'+str(t_train)+'s.h5'
-        model_name = save_path + '_tCNN_' + str(self.window_time) + 's.{epoch:02d}-{val_accuracy:.4f}.h5'
+        model_name = f'{self.model_name}-{str(self.window_time)}s-' + '{epoch:02d}-{val_accuracy:.4f}.h5'
+        model_name = os.path.join(save_path, model_name)
         adam = Adam(learning_rate=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-07)
         callbacks = self.set_callbacks(check_point=check_point, check_point_mode=check_point_mode,
                                        check_point_path=model_name, csv_logger=csv_logger,
@@ -204,8 +210,11 @@ class NNBase:
             epochs=epochs,
             validation_data=val_generator,
             validation_steps=1,
-            callbacks=callbacks
+            callbacks=callbacks,
+            verbose=1
         )
+        if save:
+            self.save_model(model, f'{self.model_name}-{str(self._t_train)}s-{epochs:02d}', save_path)
 
     def test(self, test_data, y_label, start_time, batch_size=32, fs=128, model_path='model'):
         """
@@ -225,7 +234,6 @@ class NNBase:
 
         :return: the accuracy of the test data
         """
-        win_train = int(self.window_time * fs)
         if model_path == 'model':
             model_name = model_path + '_tCNN_' + str(self.window_time) + 's.{epoch:02d}-{val_accuracy:.4f}.h5'
         else:
@@ -339,3 +347,18 @@ class NNBase:
         """
         self.fs = fs
         self.input_shape = (self.channels, int(self.window_time * self.fs), 1)
+
+    def save_model(self, model, model_name, save_path=''):
+        """
+        save the model to the save_path
+
+        :param model: the model that need to be saved
+
+        :param model_name: the name of the model
+
+        :param save_path: the path of the model
+        """
+        model_name = os.path.join(save_path, model_name)
+        model_name = model_name + '.h5'
+        print(model_name)
+        model.save(model_name)
