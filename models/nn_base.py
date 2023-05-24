@@ -69,7 +69,12 @@ class NNBase:
         train_list = np.delete(train_list, val_list)
         return train_list, val_list
 
-    def train(self, train_data, y_label, start_time, batch_size=32, epochs=100, save_path='model'):
+    def train(self, train_data, y_label, start_time, lr=0.01,
+              batch_size=256, epochs=400, reduce_lr=True,
+              check_point=False, check_point_mode='min', csv_logger=False,
+              tensorboard=False, tensorboard_write_graph=True, tensorboard_histogram_freq=1,
+              reducelr_patience=20, reducelr_factor=0.7, reducelr_min_lr=0.0001, reducelr_verbose=1,
+              fs=128, save_path='model'):
         win_trian = int(self.window_time * self.fs)
         train_list, val_list = self.__train_val_split(y_label)
         train_generator = self.__train_data_generator(batch_size, train_data, win_trian, y_label, start_time,
@@ -82,13 +87,14 @@ class NNBase:
         # model.summary()
         # model_name = 'tCnn_model_'+str(t_train)+'s.h5'
         model_name = save_path + '_tCNN_' + str(self.window_time) + 's.{epoch:02d}-{val_accuracy:.4f}.h5'
-        model_checkpoint = ModelCheckpoint(model_name, monitor='val_loss', verbose=1, save_best_only=True,
-                                           mode='min')
         adam = Adam(learning_rate=0.01, beta_1=0.9, beta_2=0.999, epsilon=1e-07)
-        reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.9, patience=15, min_lr=0.0003)
-        csv_logger = CSVLogger(save_path + "TCNN" + ".log")
-        tensorboard = TensorBoard(log_dir=save_path + "TCNN_tb" + ".log", histogram_freq=1, write_graph=True,
-                                  write_images=True)
+        callbacks = self.set_callbacks(check_point=check_point, check_point_mode=check_point_mode,
+                                       check_point_path=model_name, csv_logger=csv_logger, tensorboard=tensorboard,
+                                       tensorboard_write_graph=tensorboard_write_graph,
+                                       tensorboard_histogram_freq=tensorboard_histogram_freq,
+                                       reducelr_patience=reducelr_patience, reducelr_factor=reducelr_factor,
+                                       reducelr_min_lr=reducelr_min_lr,
+                                       reducelr_verbose=reducelr_verbose)
         model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
         # print(model.summary())
         history = model.fit(
@@ -97,7 +103,7 @@ class NNBase:
             epochs=epochs,
             validation_data=val_generator,
             validation_steps=1,
-            callbacks=[model_checkpoint, reduce_lr]
+            callbacks=callbacks
         )
 
     def test(self, test_data, y_label, start_time, batch_size=32, fs=128, model_path='model'):
@@ -132,6 +138,28 @@ class NNBase:
             acc_list.append(acc)
         av_acc = np.mean(acc_list)
         print(av_acc)
+
+    def set_callbacks(self, check_point=True, check_point_mode='min', check_point_path='', csv_logger=True,
+                      tensorboard=True, tensorboard_write_graph=True, tensorboard_histogram_freq=1, reduce_lr=True,
+                      reducelr_patience=20, reducelr_factor=0.7, reducelr_min_lr=0.0001, reducelr_verbose=1):
+        callbacks = []
+        if reduce_lr:
+            reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=reducelr_factor,
+                                          patience=reducelr_patience, min_lr=reducelr_min_lr, verbose=reducelr_verbose)
+            callbacks.append(reduce_lr)
+        if check_point:
+            model_checkpoint = ModelCheckpoint(check_point_path, monitor='val_accuracy', verbose=1,
+                                               save_best_only=True, mode=check_point_mode)
+            callbacks.append(model_checkpoint)
+        if csv_logger:
+            csv_logger = CSVLogger(self.model_name + ".log")
+            callbacks.append(csv_logger)
+        if tensorboard:
+            tensorboard = TensorBoard(log_dir=self.model_name, write_graph=tensorboard_write_graph,
+                                      histogram_freq=tensorboard_histogram_freq)
+            callbacks.append(tensorboard)
+
+        return callbacks
 
     def set_input_shape(self, input_shape):
         self.input_shape = input_shape
