@@ -5,6 +5,7 @@ from keras.optimizers import Adam
 from keras.layers import Input
 from keras.models import Model, load_model
 import os
+import utils
 
 
 class NNBase:
@@ -32,100 +33,6 @@ class NNBase:
         :param inputs: the input of the neural network
         """
         pass
-
-    def __train_data_generator(self, batch_size, train_data, win_train, y_label, start_time, train_list, channel):
-        """
-        the generator of the training data
-
-        :param batch_size:  the size of the batch
-
-        :param train_data:  the training data
-
-        :param win_train:  the length of the training data
-
-        :param y_label:  the label of the training data
-
-        :param start_time:  the start time of the training data
-
-        :param train_list:  the list of the training data
-
-        :param channel:  the number of the channels
-
-        :return:  the training data and the label of the training data
-        """
-        while True:
-            x_train = np.zeros((batch_size, self.channels, win_train, 1), dtype=np.float32)
-            y_train = np.zeros((batch_size, self.num_classes), dtype=np.float32)
-            # get training samples of batch_size trials
-            for i in range(batch_size):
-                # randomly selecting the single-trial
-                k = np.random.choice(train_list)
-                # get the label of the single-trial
-                y_data = y_label[k]
-                # randomly selecting a single-sample in the single-trial,630 frames is the data range we used
-                # 630 frames = 4.9s * 128Hz
-                time_start = np.random.randint(0, int(630 - win_train)) - start_time[0]
-                x1 = int(start_time[k]) + time_start
-                x2 = int(start_time[k]) + time_start + win_train
-                x_train_data = train_data[x1:x2, :]
-                # todo: add preprocessing functions here
-
-                x_train[i] = np.reshape(x_train_data, (self.channels, win_train, 1))
-                y_train[i] = to_categorical(y_data, self.num_classes)
-            # print(x_train.shape)
-            yield x_train, y_train
-
-    def __test_data_generator(self, batch_size, train_data, win_train, y_label, start_time, channel):
-        """
-        the generator of the testing data
-
-        :param batch_size:  the size of the batch
-
-        :param train_data:  the training data
-
-        :param win_train:  the length of the training data
-
-        :param y_label:  the label of the training data
-
-        :param start_time:  the start time of the training data
-
-        :param channel:  the number of the channels
-
-        :return:  the training data and the label of the training data
-        """
-        x_train = np.zeros((batch_size, self.channels, win_train, 1), dtype=np.float32)
-        y_train = np.zeros((batch_size, self.num_classes), dtype=np.float32)
-        # get training samples of batch_size trials
-        for i in range(batch_size):
-            # randomly selecting the single-trial
-            k = np.random.randint(0, (y_label.shape[0] - 1))
-            # get the label of the single-trial
-            y_data = y_label[k]
-            # randomly selecting a single-sample in the single-trial,630 frames is the data range we used
-            # 630 frames = 4.9s * 128Hz
-            time_start = np.random.randint(0, int(630 - win_train)) - start_time[0]
-            x1 = int(start_time[k]) + time_start
-            x2 = int(start_time[k]) + time_start + win_train
-            x_train_data = train_data[x1:x2, :]
-            # todo: add preprocessing functions here
-
-            x_train[i] = np.reshape(x_train_data, (self.channels, win_train, 1))
-            y_train[i] = to_categorical(y_data, self.num_classes)
-
-        return x_train, y_train
-
-    def __train_val_split(self, y_label):
-        """
-        split the training data into training set and validation set
-
-        :param y_label:  the label of the training data
-
-        :return:  the index of the training set and validation set
-        """
-        train_list = np.arange(y_label.shape[0])
-        val_list = np.random.choice(train_list, size=y_label.shape[0] // 10, replace=False)
-        train_list = np.delete(train_list, val_list)
-        return train_list, val_list
 
     def train(self, train_data, y_label, start_time, lr=0.01,
               batch_size=256, epochs=400, reduce_lr=True,
@@ -180,12 +87,11 @@ class NNBase:
         if not os.path.exists(save_path) and save_path != '':
             os.makedirs(save_path)
 
-        win_trian = int(self.window_time * self.fs)
-        train_list, val_list = self.__train_val_split(y_label)
-        train_generator = self.__train_data_generator(batch_size, train_data, win_trian, y_label, start_time,
-                                                      train_list, train_data.shape[0])
-        val_generator = self.__train_data_generator(batch_size, train_data, win_trian, y_label, start_time,
-                                                    val_list, train_data.shape[0])
+        train_list, val_list = utils.train_val_split(y_label)
+        train_generator = utils.train_data_generator(batch_size, train_data, y_label, start_time, train_list,
+                                                     self.num_classes, self.input_shape)
+        val_generator = utils.train_data_generator(batch_size, train_data, y_label, start_time, val_list,
+                                                   self.num_classes, self.input_shape)
         input_tensor = Input(shape=self.input_shape)
         preds = self.model(input_tensor)
         model = Model(input_tensor, preds)
@@ -241,10 +147,9 @@ class NNBase:
         model = load_model(model_name)
         print('load model: ', model_name)
         acc_list = []
-        av_acc_list = []
         for i in range(5):
-            x_train, y_train = self.__test_data_generator(batch_size, test_data, win_trian, y_label, start_time,
-                                                          test_data.shape[0])
+            x_train, y_train = utils.test_data_generator(batch_size, test_data, y_label, start_time, self.num_classes,
+                                                         self.input_shape)
             a, b = 0, 0
             # get the predicted results of the batchsize test samples
             y_pred = model.predict(np.array(x_train))
