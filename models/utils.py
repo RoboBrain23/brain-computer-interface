@@ -41,9 +41,15 @@ def train_data_generator(batch_size, data, y_label, start_time, train_list, num_
     x_train = np.zeros(input_shape, dtype=np.float32)
     y_train = np.zeros((batch_size, num_classes), dtype=np.float32)
     while True:
-        for i in range(batch_size):
+        labels_count = np.zeros(num_classes)
+        i = 0
+        while np.sum(labels_count) < batch_size:
             k = np.random.choice(train_list)
             y_data = y_label[k]
+            if labels_count[y_data] < batch_size // num_classes:
+                labels_count[y_data] += 1
+            else:
+                continue
             time_start = np.random.randint(0, int(630 - input_shape[2])) - start_time[0]
             x1 = int(start_time[k]) + time_start
             x2 = int(start_time[k]) + time_start + input_shape[2]
@@ -52,6 +58,7 @@ def train_data_generator(batch_size, data, y_label, start_time, train_list, num_
 
             x_train[i] = np.reshape(x_train_data[0][:, x1:x2], input_shape[1:])
             y_train[i] = to_categorical(y_data, num_classes=num_classes, dtype='float32')
+            i += 1
         yield x_train, y_train
 
 
