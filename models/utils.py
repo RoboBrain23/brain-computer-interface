@@ -179,3 +179,9 @@ def save_model(model, model_name, save_path=''):
     model_name = model_name + '.h5'
     print(model_name)
     model.save(model_name)
+
+def square(x):
+    return K.square(x)
+
+def log(x):
+    return K.log(K.clip(x, min_value = 1e-7, max_value = 10000))   

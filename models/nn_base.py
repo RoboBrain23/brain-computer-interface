@@ -97,8 +97,6 @@ class NNBase:
                                                      self.num_classes, self.input_shape,is_fb=self.is_fb)
         val_generator = utils.train_data_generator(batch_size, train_data, y_label, start_time, val_list,
                                                    self.num_classes, self.input_shape,is_fb=self.is_fb)
-        print(self.input_shape)
-        print(next(train_generator)[0].shape)
         input_tensor = Input(shape=self.input_shape)
         preds = self.model(input_tensor)
         model = Model(input_tensor, preds)
