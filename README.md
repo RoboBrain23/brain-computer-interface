@@ -1,67 +1,50 @@
-# Brain-Computer Interface (BCI)
+# Brain-Computer Interface (BCI) Project
+## Table of Contents
+- [Introduction](#introduction)
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+  - [Usage](#usage)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
 
-BCI is a Python-based project that aims to provide a platform for recording and processing EEG signals in real-time to develop applications for human-computer interaction using machine learning techniques. This project uses Emotiv EPOC+ headset and CyKIT library to acquire EEG signals.
+## Introduction
+Welcome to the Brain-Computer Interface (BCI) project! This repository contains the source code and documentation for our BCI system, which allows users to interact with computers or other devices using their brain signals. The project aims to provide a user-friendly and versatile interface to enable various applications in the fields of assistive technology, neuroscience, and human-computer interaction.
 
-The project is divided into two main components:
-- Data Acquisition: This component handles the acquisition of raw EEG data from the Emotiv EPOC+ headset, and stores it in a CSV format.
-- Data Processing: This component takes the raw EEG data acquired by the Data Acquisition component, performs preprocessing, feature extraction, and classification using machine learning techniques, and provides an output for interaction with various applications.
+## Features
+- **Real-time Signal Acquisition:** The BCI system is capable of acquiring brain signals in real-time using EEG (Electroencephalogram) sensors.
+- **Signal Preprocessing:** Preprocess the raw EEG data to improve signal quality and remove noise using various filtering techniques.
+- **Machine Learning Models:** Employ advanced machine learning algorithms to classify brain signals and translate them into meaningful commands or actions.
 
-This README file is specific to the Data Acquisition component of the project.
+## Getting Started
+To use the BCI system on your local machine, follow these instructions:
 
-## Data Acquisition
+### Requirements
+- EEG hardware and electrodes compatible with the system. (Add specific models and hardware requirements if applicable)
+- Python 3.x installed on your system.
+- (Any other specific requirements for the BCI system)
 
-The Data Acquisition component is responsible for acquiring raw EEG signals from the Emotiv EPOC+ headset and storing it in CSV format. The data acquisition process involves flashing the LED light at a particular frequency to elicit SSVEP signals in the brain. The flickering light is used to generate an event-related potential that can be measured by the Emotiv EPOC+ headset.
+### Installation
+1. Clone this repository to your local machine.
+2. Install the required Python packages by running the following command:
+   ```
+   pip install -r requirements.txt
+### Usage
+1. Connect Emotiv BCI Headset
+   - Ensure you have the Emotiv BCI headset and the necessary electrodes.
+   - Follow the manufacturer's instructions to properly set up and connect the headset to your computer.
+2. Run Data Acquisition Script
+   - Use the provided data acquisition script to collect EEG data from the Emotiv BCI headset.
+   - Execute the script to start the data collection process.
+3. Train and Run Machine Learning Models
+   - Utilize the preprocessed EEG data to train machine learning models for classification.
+   - Depending on your project, choose appropriate Models such as TCNN, EEGNET, SSVEPNET, etc.
+   - Use the trained models to interpret brain signals and convert them into meaningful commands or actions.
 
-The Data Acquisition component is built using Python and the following libraries:
+## Contributing
+Contributions to this project are welcome! If you find any issues or have suggestions for improvements, feel free to open a [GitHub Issue](https://github.com/RoboBrain23/brain-computer-interface/issues) or submit a pull request.
 
-- CyKIT (https://github.com/CymatiCorp/CyKit)
-
-The main.py file in the data_acquisition directory of the project is the entry point for the Data Acquisition component. It contains the code to start the acquisition process and store the EEG data in CSV format. The config/config.py file contains the configuration parameters for the acquisition process, such as the stimulus duration, break duration, and frequencies.
-
-## Project Structure
-
-The project is organized into the following directories:
-
-```
-brain-computer-interface
-├── data_acquisition
-│   ├── config
-│   │   └── config.py
-│   ├── gui
-│   │   ├── __init__.py
-│   │   ├── MainWindow.py
-│   │   ├── widgets
-│   │   │   ├── FlickringModeGroupBox.py
-│   │   │   ├── LogoLabel.py
-│   │   │   └── __init__.py
-│   │   └── resources
-│   │       └── icon.png
-│   ├── modules
-│   │   ├── __init__.py
-│   │   ├── emotiv.py
-│   │   └── ssvep.py
-│   ├── test
-│   │   ├── __init__.py
-│   │   ├── test_emotiv.py
-│   │   └── test_ssvep.py
-│   └── __init__.py
-├── data_processing
-│   ├── data
-│   │   └── sample.csv
-│   ├── model
-│   │   ├── __init__.py
-│   │   └── classifier.pkl
-│   ├── __init__.py
-│   ├── process_data.py
-│   └── train_model.py
-├── requirements.txt
-├── README.md
-└── .gitignore
-```
-
-- data_acquisition: Contains the Data Acquisition component.
-- data_processing: Contains the Data Processing component.
-- datasets: Contains sample datasets for testing purposes.
-- models: Contains machine learning models used for classification.
-- scripts: Contains various scripts for data processing and analysis.
-
+### License
+This project is licensed under the [MIT License](./LICENSE). Feel free to use and modify the code for your needs while respecting the terms of the license.
