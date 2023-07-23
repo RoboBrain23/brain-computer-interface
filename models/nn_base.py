@@ -9,7 +9,7 @@ import utils
 
 
 class NNBase:
-    def __init__(self, fs=128, channels=2, num_classes=4):
+    def __init__(self, fs=128, channels=2, num_classes=4,is_fb = False):
         """
         NN is the base class of all the neural networks used in this project
 
@@ -18,6 +18,8 @@ class NNBase:
         :param channels: the number of the channels of the EEG data
 
         :param num_classes: the number of the classes
+
+        :param is_fb: whether to use the filter bank or not
         """
         self.num_classes = num_classes
         self.window_time = 1
@@ -25,6 +27,8 @@ class NNBase:
         self.fs = fs
         self.input_shape = (channels, int(self.window_time * self.fs), 1)
         self.channels = channels
+        self.is_fb = is_fb
+
 
     def model(self, inputs):
         """
@@ -87,11 +91,12 @@ class NNBase:
         if not os.path.exists(save_path) and save_path != '':
             os.makedirs(save_path)
 
+        train_data = utils.filter_data(train_data,fs=self.fs,is_fb=self.is_fb)
         train_list, val_list = utils.train_val_split(y_label)
         train_generator = utils.train_data_generator(batch_size, train_data, y_label, start_time, train_list,
-                                                     self.num_classes, self.input_shape)
+                                                     self.num_classes, self.input_shape,is_fb=self.is_fb)
         val_generator = utils.train_data_generator(batch_size, train_data, y_label, start_time, val_list,
-                                                   self.num_classes, self.input_shape)
+                                                   self.num_classes, self.input_shape,is_fb=self.is_fb)
         input_tensor = Input(shape=self.input_shape)
         preds = self.model(input_tensor)
         model = Model(input_tensor, preds)
