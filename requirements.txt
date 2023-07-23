@@ -1,0 +1,14 @@
+cffi==1.15.1
+keras==2.10.0
+numpy==1.24.2
+numpy==1.23.5
+pycryptodome==3.18.0
+pygame==2.3.0
+PySide6==6.5.1.1
+PySide6_Essentials==6.5.0
+scipy==1.10.1
+sets==0.3.2
+tensorflow==2.10.1
+tensorflow==2.10.0
+tensorflow_addons==0.20.0
+wxPython==4.2.0
