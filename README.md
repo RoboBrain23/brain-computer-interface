@@ -21,9 +21,8 @@ Welcome to the Brain-Computer Interface (BCI) project! This repository contains 
 To use the BCI system on your local machine, follow these instructions:
 
 ### Requirements
-- EEG hardware and electrodes compatible with the system. (Add specific models and hardware requirements if applicable)
+- EEG hardware and electrodes compatible with the system. (Emotiv BCI Headset)
 - Python 3.x installed on your system.
-- (Any other specific requirements for the BCI system)
 
 ### Installation
 1. Clone this repository to your local machine.
