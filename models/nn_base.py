@@ -97,6 +97,8 @@ class NNBase:
                                                      self.num_classes, self.input_shape,is_fb=self.is_fb)
         val_generator = utils.train_data_generator(batch_size, train_data, y_label, start_time, val_list,
                                                    self.num_classes, self.input_shape,is_fb=self.is_fb)
+        print(self.input_shape)
+        print(next(train_generator)[0].shape)
         input_tensor = Input(shape=self.input_shape)
         preds = self.model(input_tensor)
         model = Model(input_tensor, preds)
@@ -247,7 +249,10 @@ class NNBase:
         :param window_time: the window time that used in training
         """
         self.window_time = window_time
-        self.input_shape = (self.channels, int(self.window_time * self.fs), 1)
+        if self.is_fb:
+            self.input_shape = (self.channels, int(self.window_time * self.fs), 3)
+        else:
+            self.input_shape = (self.channels, int(self.window_time * self.fs), 1)
 
     def set_fs(self, fs):
         """
